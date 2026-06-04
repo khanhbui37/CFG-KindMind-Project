@@ -1,0 +1,73 @@
+CREATE DATABASE IF NOT EXISTS KindMind;
+
+USE KindMind;
+
+CREATE TABLE Users (
+User_id INT PRIMARY KEY AUTO_INCREMENT,
+Name VARCHAR(100) NOT NULL,
+Email VARCHAR(100) NOT NULL,
+Hashed_password VARCHAR(100) NOT NULL,
+Created_at DATE
+);
+
+CREATE TABLE MoodCategory (
+Category_id INT PRIMARY KEY AUTO_INCREMENT,
+Category_name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE MoodScore (
+Score_id INT PRIMARY KEY AUTO_INCREMENT,
+Score_name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE MoodOptions (
+Mood_id INT PRIMARY KEY AUTO_INCREMENT,
+Mood_name VARCHAR(100) NOT NULL,
+Mood_category INT NOT NULL,
+FOREIGN KEY (Mood_category)
+REFERENCES MoodCategory(Category_id),
+Mood_score INT NOT NULL, 
+FOREIGN KEY (Mood_score)
+REFERENCES MoodScore(Score_id),
+Description VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE EnergyLevel (
+Energy_id INT PRIMARY KEY AUTO_INCREMENT,
+Energy_name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE WeatherOptions (
+Weather_id INT PRIMARY KEY AUTO_INCREMENT,
+Weather_name VARCHAR (100) NOT NULL
+);
+
+
+CREATE TABLE JournalEntries (
+Entry_id INT PRIMARY KEY AUTO_INCREMENT,
+User_id INT NOT NULL, 
+FOREIGN KEY (User_id)
+REFERENCES Users(User_id),
+Title VARCHAR(100) NOT NULL,
+Content VARCHAR (255) NOT NULL,
+Mood INT NOT NULL,
+FOREIGN KEY (Mood)
+REFERENCES MoodOptions(Mood_id),
+Energy_level INT NOT NULL,
+FOREIGN KEY (Energy_level)
+REFERENCES EnergyLevel(Energy_id),
+Free_time BOOLEAN NOT NULL,
+Weather INT NOT NULL,
+FOREIGN KEY (Weather)
+REFERENCES WeatherOptions(Weather_id),
+Created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE TABLE Recommendations(
+Recomendation_id INT PRIMARY KEY AUTO_INCREMENT,
+Entry_id INT NOT NULL,
+FOREIGN KEY (Entry_id)
+REFERENCES JournalEntries(Entry_id),
+Recommendation_text VARCHAR(255) NOT NULL,
+Created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
