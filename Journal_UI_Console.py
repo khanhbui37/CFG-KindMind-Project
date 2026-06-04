@@ -1,4 +1,18 @@
 IN PROGRESS
+# ==================================================
+# KindMind Console UI
+# Journal Entry User Interaction Draft
+#
+# Purpose:
+# Collect user journal information through
+# a console-based interface.
+#
+# Features:
+# - Title input
+# - Journal content input
+# - Mood selection
+# - Validation (coming next)
+# ==================================================
 
 def add_journal_entry():
     print("Add journal entry")
