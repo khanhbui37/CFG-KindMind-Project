@@ -43,7 +43,6 @@ Weather_id INT PRIMARY KEY AUTO_INCREMENT,
 Weather_name VARCHAR (100) NOT NULL
 );
 
-
 CREATE TABLE IF NOT EXISTS JournalEntries (
 Entry_id INT PRIMARY KEY AUTO_INCREMENT,
 User_id INT NOT NULL, 
@@ -74,16 +73,20 @@ Created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 Deleted_at TIMESTAMP
 );
 
-IF NOT EXISTS (SELECT 1 FROM EnergyLevel)
-	INSERT INTO EnergyLevel
-	VALUES 
-	(1,'Drained'),
-	(2,'Sluggish'),
-	(3,'Mellow'),
-	(4,'Steady'),
-	(5,'Vibrant'),
-	(6,'Driven'),
-	(7,'Radiant');
+-- =========================================================
+-- 02- KINDMIND MOCK DATA
+-- =========================================================
+
+INSERT IGNORE INTO EnergyLevel
+VALUES 
+(1,'Drained'),
+(2,'Sluggish'),
+(3,'Mellow'),
+(4,'Steady'),
+(5,'Vibrant'),
+(6,'Driven'),
+(7,'Radiant');
+
 
 INSERT INTO MoodCategory
 VALUES
