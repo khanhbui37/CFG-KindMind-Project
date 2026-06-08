@@ -2,7 +2,7 @@ CREATE DATABASE IF NOT EXISTS KindMind;
 
 USE KindMind;
 
-CREATE TABLE Users (
+CREATE TABLE IF NOT EXISTS Users (
 User_id INT PRIMARY KEY AUTO_INCREMENT,
 Name VARCHAR(100) NOT NULL,
 Email VARCHAR(100) UNIQUE NOT NULL,
@@ -11,17 +11,17 @@ Created_at DATE NOT NULL,
 Deleted_at DATE
 );
 
-CREATE TABLE MoodCategory (
+CREATE TABLE IF NOT EXISTS MoodCategory (
 Category_id INT PRIMARY KEY AUTO_INCREMENT,
 Category_name VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE MoodScore (
+CREATE TABLE IF NOT EXISTS MoodScore (
 Score_id INT PRIMARY KEY AUTO_INCREMENT,
 Score_name VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE MoodOptions (
+CREATE TABLE IF NOT EXISTS MoodOptions (
 Mood_id INT PRIMARY KEY AUTO_INCREMENT,
 Mood_name VARCHAR(100) NOT NULL,
 Mood_category INT NOT NULL,
@@ -33,18 +33,18 @@ REFERENCES MoodScore(Score_id),
 Description VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE EnergyLevel (
+CREATE TABLE IF NOT EXISTS EnergyLevel (
 Energy_id INT PRIMARY KEY AUTO_INCREMENT,
 Energy_name VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE WeatherOptions (
+CREATE TABLE IF NOT EXISTS WeatherOptions (
 Weather_id INT PRIMARY KEY AUTO_INCREMENT,
 Weather_name VARCHAR (100) NOT NULL
 );
 
 
-CREATE TABLE JournalEntries (
+CREATE TABLE IF NOT EXISTS JournalEntries (
 Entry_id INT PRIMARY KEY AUTO_INCREMENT,
 User_id INT NOT NULL, 
 FOREIGN KEY (User_id)
@@ -64,7 +64,7 @@ REFERENCES WeatherOptions(Weather_id),
 Created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
-CREATE TABLE Recommendations(
+CREATE TABLE IF NOT EXISTS Recommendations(
 Recommendation_id INT PRIMARY KEY AUTO_INCREMENT,
 Entry_id INT NOT NULL,
 FOREIGN KEY (Entry_id)
@@ -74,15 +74,16 @@ Created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 Deleted_at TIMESTAMP
 );
 
-INSERT INTO EnergyLevel
-VALUES 
-(1,'Drained'),
-(2,'Sluggish'),
-(3,'Mellow'),
-(4,'Steady'),
-(5,'Vibrant'),
-(6,'Driven'),
-(7,'Radiant');
+IF NOT EXISTS (SELECT 1 FROM EnergyLevel)
+	INSERT INTO EnergyLevel
+	VALUES 
+	(1,'Drained'),
+	(2,'Sluggish'),
+	(3,'Mellow'),
+	(4,'Steady'),
+	(5,'Vibrant'),
+	(6,'Driven'),
+	(7,'Radiant');
 
 INSERT INTO MoodCategory
 VALUES
