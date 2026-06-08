@@ -16,13 +16,81 @@ def start_flask():
 
     app.run(debug=False)
 
-# Function for posting registration info to API
-def post_register_info():
+def post_login_info():
+    if_logged_in = True #Temporarily set to TRUE
+    #Let to implement login function
+    if if_logged_in:
+        login_menu()
+    else:
+        print("Invalid Credentials")
+
+
+def login_menu():
+
+    print(colorama.Fore.RED + "\nYOU HAVE SUCCESSFULLY LOGGED IN")
+    print(colorama.Fore.YELLOW + "\na. To Add an Entry to Journal enter " + colorama.Fore.RED + " 1" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "b. To View Journal Entries enter " + colorama.Fore.RED + " 2" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "c. To Edit Journal Entry enter " + colorama.Fore.RED + " 3" + colorama.Style.RESET_ALL)
+    print( colorama.Fore.YELLOW + "d. To Search Entries enter " + colorama.Fore.RED + " 4" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "e. To Get Recommendations enter " + colorama.Fore.RED + " 5" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "f. To View Mood Summary enter " + colorama.Fore.RED + " 6" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "g. To Delete an Entry enter  " + colorama.Fore.RED + " 7" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "h. To Logout enter " + colorama.Fore.RED + " 8" + colorama.Style.RESET_ALL)
+
+    login_input = input(colorama.Fore.LIGHTBLUE_EX + "\nENTER YOUR CHOICE HERE: " + colorama.Style.RESET_ALL)
+
+    if login_input == "1":
+        add_journal_entry()
+
+    elif login_input == "2":
+        view_journal_entry()
+
+    elif login_input == "3":
+        edit_journal_entry()
+
+    elif login_input == "4":
+        search_entries()
+
+    elif login_input == "5":
+        get_recommendations()
+
+    elif login_input == "6":
+        to_view_mood_summary()
+
+    elif login_input == "7":
+        delete_entry()
+
+    elif login_input == "8":
+        logout()
+
+
+def post_registration_info():
     pass
 
-#Function for posting longin info to API
-def post_login_info():
+def view_journal_entry():
     pass
+
+def add_journal_entry():
+    pass
+
+def edit_journal_entry():
+    pass
+
+def search_entries():
+    pass
+
+def get_recommendations():
+    pass
+
+def to_view_mood_summary():
+    pass
+
+def delete_entry():
+    pass
+
+def logout():
+    pass
+
 
 # Function to interact with API
 def run():
@@ -42,11 +110,11 @@ def run():
         user_input = input(colorama.Fore.LIGHTBLUE_EX +"\nENTER YOUR CHOICE HERE: "+colorama.Style.RESET_ALL)
 
         if user_input == "1":
-            post_register_info() # call post_register_info() declared above to post registration info.
+            post_registration_info() # call post_register_info() declared above to post registration info.
             break
 
         elif user_input == "2":
-            post_login_info() # call post_login_info() function declared above above to post login info.
+            post_login_info()
             break
 
         elif user_input == "3":
