@@ -25,25 +25,58 @@ def create_data_base():
 
         tables = {
             "users": """ CREATE TABLE IF NOT EXISTS users (
-                                             id INT PRIMARY KEY AUTO_INCREMENT,
+                                             user_id INT PRIMARY KEY AUTO_INCREMENT,
                                              name VARCHAR(100) NOT NULL,
                                              email VARCHAR(100) UNIQUE NOT NULL,
-                                             Hashed_password VARCHAR(255) NOT NULL,
-                                             Created_at DATE NOT NULL)""",
+                                             hashed_password VARCHAR(255) NOT NULL,
+                                             created_at DATE NOT NULL)""",
             "mood_category": """ CREATE TABLE IF NOT EXISTS mood_category (
-                                             id INT PRIMARY KEY AUTO_INCREMENT,
-                                             name VARCHAR(100) NOT NULL)"""
-
-
-        #I have created 2 tables for your reference, you can create the remaining tables here in the same format. As we have to follow naming conventions I have kept the first letter of variable names in lowercase and as we will create variables within the respective tables, instead of using table names for variables like "user_id", just "id" would be enough I think.
+                                             category_id  INT PRIMARY KEY AUTO_INCREMENT,
+                                             category_name VARCHAR(100) UNIQUE NOT NULL)""",
+            "mood_score": """ CREATE TABLE IF NOT EXISTS mood_score(
+                                             score_id INT PRIMARY KEY AUTO_INCREMENT,
+                                             score_name VARCHAR(100) UNIQUE NOT NULL)""",
+            "energy_level": """ CREATE TABLE IF NOT EXISTS energy_level (
+                                             energy_id INT PRIMARY KEY AUTO_INCREMENT,
+                                             energy_name VARCHAR(100) UNIQUE NOT NULL)""",
+            "weather_options": """ CREATE TABLE IF NOT EXISTS weather_options (
+                                             weather_id INT PRIMARY KEY AUTO_INCREMENT,
+                                             weather_name VARCHAR (100) UNIQUE NOT NULL)""",
+            "journal_entries": """ CREATE TABLE IF NOT EXISTS journal_entries (
+                                             entry_id INT PRIMARY KEY AUTO_INCREMENT,
+                                             user_id INT NOT NULL, 
+                                             FOREIGN KEY (user_id)
+                                             REFERENCES users(user_id) ON DELETE CASCADE,
+                                             title VARCHAR(100) NOT NULL,
+                                             content TEXT NOT NULL,
+                                             mood_category_id INT NOT NULL,
+                                             FOREIGN KEY (mood_category_id)
+                                             REFERENCES mood_category(category_id),
+                                             mood_score_id INT NOT NULL,
+                                             FOREIGN KEY (mood_score_id)
+                                             REFERENCES mood_score(score_id),
+                                             energy_level INT NOT NULL,
+                                             FOREIGN KEY (energy_level)
+                                             REFERENCES energy_level(energy_id),
+                                             free_time BOOLEAN NOT NULL,
+                                             weather INT NOT NULL,
+                                             FOREIGN KEY (weather)
+                                             REFERENCES weather_options(weather_id),
+                                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)"""
 
         }
 
-        # After creating tables, we need to be check for if the table is empty, only if the table is empty, we have to insert the values into the table, orelse each time app runs we will be adding duplicate entries.
+        try:
+            for name, query in tables.items():
+                cursor.execute(query)
+                print(f"Created table {name}")
 
-        for name, query in tables.items():
-            cursor.execute(query)
-            print(f"Created table {name}")
+        except mysql.connector.Error as error:
+            print(f"Error creating table: {error}")
+
+
+        # Insert default values
+        insert_default_values(cursor)
 
         db.commit()
 
@@ -56,3 +89,80 @@ def create_data_base():
         if db:
             db.close()
 
+
+def insert_default_values(cursor):
+
+    # Mood Categories
+    cursor.executemany(
+        """
+        INSERT IGNORE INTO mood_category (category_name)
+        VALUES (%s)
+        """,
+        [
+            ('Negative',),
+            ('Neutral',),
+            ('Positive',),
+            ('Ambiguous',)
+        ]
+    )
+
+    # Mood Scores
+    cursor.executemany(
+        """
+        INSERT IGNORE INTO mood_score (score_name)
+        VALUES (%s)
+        """,
+        [
+            ('Terrible',),
+            ('Bad',),
+            ('Off',),
+            ('Ok',),
+            ('Good',),
+            ('Great',),
+            ('Fantastic',),
+            ('Mixed',),
+            ('Unsure',)
+        ]
+    )
+
+    # Energy Level
+    cursor.executemany(
+        """
+        INSERT IGNORE INTO energy_level (energy_name)
+        VALUES (%s)
+        """,
+        [
+            ('Drained',),
+            ('Sluggish',),
+            ('Mellow',),
+            ('Steady',),
+            ('Vibrant',),
+            ('Driven',),
+            ('Radiant',)
+        ]
+    )
+
+    # Weather Options
+    cursor.executemany(
+        """
+        INSERT IGNORE INTO weather_options (weather_name)
+        VALUES (%s)
+        """,
+        [
+            ('Sunny',),
+            ('Mostly Sunny',),
+            ('Hot & Scorching',),
+            ('Partly Cloudy',),
+            ('Mostly Cloudy',),
+            ('Overcast',),
+            ('Light Drizzle',),
+            ('Showers',),
+            ('Heavy Rain',),
+            ('Light Snow',),
+            ('Heavy Snow',),
+            ('Freezing Rain',),
+            ('Thunderstorm',),
+            ('Windy',),
+            ('Foggy / Misty',)
+        ]
+    )
