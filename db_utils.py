@@ -11,7 +11,7 @@ def get_connection():
         return None
 
 
-def create_data_base():
+def create_database():
     db = None
     cursor = None
 
@@ -60,8 +60,7 @@ def create_data_base():
                                              REFERENCES energy_level(energy_id),
                                              free_time BOOLEAN NOT NULL,
                                              weather INT NOT NULL,
-                                             FOREIGN KEY (weather)
-                                             REFERENCES weather_options(weather_id),
+                                             recommendations TEXT,
                                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)"""
 
         }
@@ -166,3 +165,93 @@ def insert_default_values(cursor):
             ('Foggy / Misty',)
         ]
     )
+
+def get_user_mood_summary(user_id):
+    db = None
+    cursor = None
+    summary = None
+
+    try:
+        db = get_connection()
+        cursor = db.cursor(dictionary=True)
+
+        query = """
+        SELECT
+            user_id,
+            COUNT(entry_id) AS total_entries,
+            ROUND(AVG(score_id), 2) AS average_score_id,
+            ROUND(AVG(energy_id), 2) AS average_energy_id,
+
+            SUM(CASE WHEN category_name = 'Positive' THEN 1 ELSE 0 END) AS positive_entries,
+            SUM(CASE WHEN category_name = 'Neutral' THEN 1 ELSE 0 END) AS neutral_entries,
+            SUM(CASE WHEN category_name = 'Negative' THEN 1 ELSE 0 END) AS negative_entries,
+            SUM(CASE WHEN category_name = 'Ambiguous' THEN 1 ELSE 0 END) AS ambiguous_entries,
+
+            MAX(created_at) AS latest_entry,
+
+            CASE
+                WHEN AVG(score_id) <= 3 AND AVG(energy_id) <= 2
+                    THEN 'Gentle support may be helpful.'
+                WHEN SUM(CASE WHEN category_name = 'Negative' THEN 1 ELSE 0 END) >= 3
+                    THEN 'Several challenging check-ins logged.'
+                WHEN AVG(score_id) >= 5
+                    THEN 'Mostly positive pattern in this sample.'
+                ELSE 'Mixed or steady mood pattern.'
+            END AS supportive_summary
+
+        FROM journal_entries je
+            JOIN mood_category mc ON je.mood_category_id = mc.category_id
+            JOIN mood_score ms ON je.mood_score_id = ms.score_id
+            JOIN energy_level el ON je.energy_level = el.energy_id
+    
+        WHERE user_id = %s
+        GROUP BY user_id
+        """
+
+        cursor.execute("USE kindMind")
+        cursor.execute(query, (user_id,))
+        summary = cursor.fetchone()
+
+    except mysql.connector.Error as error:
+        print(f"Something went wrong: {error}")
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+    return summary if summary else None
+
+def get_common_mood_category(user_id):
+    db = None
+    cursor = None
+    try:
+        db = get_connection()
+        cursor = db.cursor(dictionary=True)
+
+        query = """
+        SELECT category_name, COUNT(*) AS count
+        
+        FROM journal_entries je
+        JOIN mood_category mc ON je.mood_category_id = mc.category_id
+        
+        WHERE user_id = %s
+        GROUP BY category_name
+        ORDER BY count DESC
+        LIMIT 1"""
+
+        cursor.execute("USE kindMind")
+        cursor.execute(query, (user_id,))
+        common_category = cursor.fetchone()
+
+        return common_category["category_name"] if common_category else None
+
+    except mysql.connector.Error as error:
+        print(f"Something went wrong: {error}")
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
