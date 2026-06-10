@@ -44,6 +44,14 @@ def get_current_weather(current_city):
     except requests.RequestException:
         return None
 
+def get_user_input_for_weather():
+    city = input("\nEnter your city lets check the weather: ")
+
+    weather = get_current_weather(city)
+
+    return weather
+
+
 def post_login_info():
     if_logged_in = True #Temporarily set to TRUE
     #Let to implement login function
@@ -203,17 +211,13 @@ def login_menu():
 
             while True:
 
-                city = input("\nEnter your city lets check the weather: ")
+                weather_result = get_user_input_for_weather()
 
-                weather = get_current_weather(city)
-                print( f"\nToday's Weather in {colorama.Fore.GREEN}{city}{colorama.Style.RESET_ALL} is {colorama.Fore.GREEN}{weather}{colorama.Style.RESET_ALL}")
-
-                if weather:
+                if weather_result:
                     break
 
                 print("Please enter a valid city.")
-
-
+            print(f"Your current weather is {weather_result}")
 
             # Added Mappings
 
@@ -278,7 +282,7 @@ def login_menu():
 
 
             # Call get_recommendations function
-            recommendation_result = get_recommendations(category, mood, energy, has_free_time, weather)
+            recommendation_result = get_recommendations(category, mood, energy, has_free_time, weather_result)
 
             print("\n==============================")
 
