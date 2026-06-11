@@ -4,6 +4,11 @@ import threading
 import time
 from db_utils import create_data_base
 import colorama
+import requests
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 BASE_URL = "http://127.0.0.1:5000"       # set base url
 
@@ -15,6 +20,101 @@ def start_flask():
     log.setLevel(logging.ERROR)
 
     app.run(debug=False)
+
+def get_current_weather(current_city):
+    api_key = os.getenv("WEATHER_API_KEY")
+
+    url = (
+        f"https://api.openweathermap.org/data/2.5/weather"
+        f"?q={current_city}&appid={api_key}&units=metric"
+    )
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+
+        data = response.json()
+
+        if "weather" in data:
+            return data["weather"][0]["main"]
+
+        return None
+
+    except requests.RequestException:
+        return None
+
+
+def get_user_input_for_weather():
+    city = input("\nEnter your city to check the weather: ")
+
+    weather = get_current_weather(city)
+
+    return weather
+
+
+def generate_recommendations(category, mood, energy, free_time, weather):
+    recommendations = []
+
+    rainy_weather = ["Rain", "Drizzle", "Thunderstorm"]
+    cloudy_weather = ["Clouds", "Mist"]
+    cold_weather = ["Snow"]
+
+    if category == "Negative":
+        recommendations.append("Take a few minutes to reflect on what is causing stress.")
+        recommendations.append("Practice deep breathing exercises.")
+
+        if free_time:
+            recommendations.append("Try a 10-minute guided meditation.")
+            recommendations.append("Take a short walk to clear your mind.")
+
+        if weather in rainy_weather:
+            recommendations.append("Stay indoors and do relaxing activities.")
+        elif weather in cloudy_weather:
+            recommendations.append("A calm walk or indoor hobby would be nice.")
+        elif weather in cold_weather:
+            recommendations.append("Stay warm and have a hot drink.")
+        else:
+            recommendations.append("Good weather! Consider going outside.")
+
+    elif category == "Neutral":
+        recommendations.append("Try an enjoyable activity to boost your mood.")
+
+        if free_time:
+            recommendations.append("Read a book or listen to a podcast.")
+
+        if weather == "Clear":
+            recommendations.append("Consider taking a walk outside.")
+
+    elif category == "Positive":
+        recommendations.append("Keep up the positive momentum.")
+        recommendations.append("Celebrate today's achievements.")
+
+        if free_time:
+            recommendations.append("Spend time on a hobby you enjoy.")
+
+    elif category == "Ambiguous":
+        recommendations.append("Take some time to identify how you are feeling.")
+        recommendations.append("Writing a journal entry may help clarify your thoughts.")
+
+    if energy in ["Drained", "Sluggish"]:
+        recommendations.append("Prioritise rest and hydration.")
+        recommendations.append("Avoid overcommitting yourself today.")
+
+    elif energy in ["Driven", "Radiant"]:
+        recommendations.append("Your energy is high. Consider exercise or a productive task.")
+
+    if mood == "Terrible":
+        recommendations.append("Reach out to a trusted friend or family member.")
+    elif mood == "Bad":
+        recommendations.append("Focus on one small positive action today.")
+    elif mood == "Fantastic":
+        recommendations.append("Capture what's going well in your journal.")
+    elif mood == "Mixed":
+        recommendations.append("Acknowledge both positive and negative feelings.")
+    elif mood == "Unsure":
+        recommendations.append("Spend a few minutes reflecting on your emotions.")
+
+    return "\n".join(f"• {item}" for item in recommendations)
 
 def post_login_info():
     if_logged_in = True #Temporarily set to TRUE
@@ -71,22 +171,65 @@ def view_journal_entry():
     pass
 
 def add_journal_entry():
-    print("\nAdd journal entry")
+    print(colorama.Fore.RED + "\nADD JOURNAL ENTRY" + colorama.Style.RESET_ALL)
 
     # Ask the user for the journal title and main journal content.
     # This information will eventually be stored in the journal_entries table.
-    title = input("Enter a title: ")
-    content = input("Write your journal entry: ")
+    while True:
+        title = input(
+            colorama.Fore.LIGHTBLUE_EX +
+            "Enter a title: " +
+            colorama.Style.RESET_ALL
+        )
+
+        if title.strip():
+            break
+
+        print(
+            colorama.Fore.RED +
+            "Title cannot be empty. Please try again." +
+            colorama.Style.RESET_ALL
+        )
+
+    while True:
+        content = input(
+            colorama.Fore.LIGHTBLUE_EX +
+            "Write your journal entry: " +
+            colorama.Style.RESET_ALL
+        )
+
+        if content.strip():
+            break
+
+        print(
+            colorama.Fore.RED +
+            "Journal content cannot be empty. Please try again." +
+            colorama.Style.RESET_ALL
+        )
 
     # Display the mood categories available to the user.
     # These options match the values stored in the mood_category table.
-    print("\nChoose your mood category:")
-    print("1. Negative")
-    print("2. Neutral")
-    print("3. Positive")
-    print("4. Ambiguous")
+    print(colorama.Fore.YELLOW + "\nChoose your mood category:" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "1. Negative" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "2. Neutral" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "3. Positive" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "4. Ambiguous" + colorama.Style.RESET_ALL)
 
-    mood_category_choice = input("Enter mood category choice: ")
+    while True:
+        mood_category_choice = input(
+            colorama.Fore.LIGHTBLUE_EX +
+            "Enter mood category choice: " +
+            colorama.Style.RESET_ALL
+        )
+
+        if mood_category_choice in ["1", "2", "3", "4"]:
+            break
+
+        print(
+            colorama.Fore.RED +
+            "Invalid choice. Please enter a number between 1 and 4." +
+            colorama.Style.RESET_ALL
+        )
 
     # Convert the user's menu selection into both:
     # 1. A user-friendly mood category name.
@@ -109,18 +252,32 @@ def add_journal_entry():
 
     # Display mood score options from the mood_score table.
     # The user selects a number and we store both the score name and ID.
-    print("\nChoose your mood score:")
-    print("1. Terrible")
-    print("2. Bad")
-    print("3. Off")
-    print("4. Ok")
-    print("5. Good")
-    print("6. Great")
-    print("7. Fantastic")
-    print("8. Mixed")
-    print("9. Unsure")
+    print(colorama.Fore.YELLOW + "\nChoose your mood score:" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "1. Terrible" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "2. Bad" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "3. Off" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "4. Ok" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "5. Good" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "6. Great" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "7. Fantastic" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "8. Mixed" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "9. Unsure" + colorama.Style.RESET_ALL)
 
-    mood_score_choice = input("Enter mood score choice: ")
+    while True:
+        mood_score_choice = input(
+            colorama.Fore.LIGHTBLUE_EX +
+            "Enter mood score choice: " +
+            colorama.Style.RESET_ALL
+        )
+
+        if mood_score_choice in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+            break
+
+        print(
+            colorama.Fore.RED +
+            "Invalid choice. Please enter a number between 1 and 9." +
+            colorama.Style.RESET_ALL
+        )
 
     # Convert the user's mood score selection into both:
     # 1. A descriptive mood score.
@@ -158,16 +315,30 @@ def add_journal_entry():
 
     # Collect the user's current energy level.
     # This will help support recommendations and mood analytics later.
-    print("\nChoose your energy level:")
-    print("1. Drained")
-    print("2. Sluggish")
-    print("3. Mellow")
-    print("4. Steady")
-    print("5. Vibrant")
-    print("6. Driven")
-    print("7. Radiant")
+    print(colorama.Fore.YELLOW + "\nChoose your energy level:" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "1. Drained" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "2. Sluggish" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "3. Mellow" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "4. Steady" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "5. Vibrant" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "6. Driven" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "7. Radiant" + colorama.Style.RESET_ALL)
 
-    energy_choice = input("Enter energy level choice: ")
+    while True:
+        energy_choice = input(
+            colorama.Fore.LIGHTBLUE_EX +
+            "Enter energy level choice: " +
+            colorama.Style.RESET_ALL
+        )
+
+        if energy_choice in ["1", "2", "3", "4", "5", "6", "7"]:
+            break
+
+        print(
+            colorama.Fore.RED +
+            "Invalid choice. Please enter a number between 1 and 7." +
+            colorama.Style.RESET_ALL
+        )
 
     if energy_choice == "1":
         energy_level_id = 1
@@ -194,42 +365,86 @@ def add_journal_entry():
         energy_level_id = None
         energy_level = "Unknown"
 
-    # Ask whether the user has free time available.
-    # This may be used later when suggesting wellbeing activities.
-    print("\nDo you have free time today?")
-    print("1. Yes")
-    print("2. No")
+    print(colorama.Fore.YELLOW + "\nDo you have free time today?" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "1. Yes" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.YELLOW + "2. No" + colorama.Style.RESET_ALL)
 
-    free_time_choice = input("Enter free time choice: ")
+    while True:
+        free_time_choice = input(
+            colorama.Fore.LIGHTBLUE_EX +
+            "Enter free time choice: " +
+            colorama.Style.RESET_ALL
+        ).lower()
 
-    # Store the value as True or False because this is easier
-    # to save in the database later.
-    #
-    # We also create a separate display value ("Yes" or "No")
-    # so the user sees something more readable on screen.
-    if free_time_choice == "1":
-        free_time = True
-        free_time_display = "Yes"
-    elif free_time_choice == "2":
-        free_time = False
-        free_time_display = "No"
-    else:
-        free_time = None
-        free_time_display = "Unknown"
+        if free_time_choice in ["1", "yes", "y"]:
+            free_time = True
+            free_time_display = "Yes"
+            break
 
-    # TODO:
-    # Weather will be retrieved automatically from the weather API
-    # rather than entered manually by the user.
+        elif free_time_choice in ["2", "no", "n"]:
+            free_time = False
+            free_time_display = "No"
+            break
 
-    # Display a summary of all information entered so the user can
-    # review their journal entry before it is saved.
-    print("\n---------- Journal Entry ------------")
-    print(f"Title: {title}")
-    print(f"Content: {content}")
-    print(f"Mood Category: {mood_category}")
-    print(f"Mood Score: {mood_score}")
-    print(f"Energy Level: {energy_level}")
-    print(f"Free Time: {free_time_display}")
+        print(
+            colorama.Fore.RED +
+            "Invalid choice. Please enter Yes/No or 1/2." +
+            colorama.Style.RESET_ALL
+        )
+
+    # Get weather from the weather API.
+    while True:
+        weather_result = get_user_input_for_weather()
+
+        if weather_result:
+            break
+
+        print(
+            colorama.Fore.RED +
+            "Invalid city. Please try again." +
+            colorama.Style.RESET_ALL
+        )
+
+    # Generate recommendations based on the user's journal choices.
+    # This recommendation text will later be stored in the journal_entries table.
+    recommendation_result = generate_recommendations(
+        mood_category,
+        mood_score,
+        energy_level,
+        free_time,
+        weather_result
+    )
+
+    print(
+        colorama.Fore.CYAN +
+        "\n---------- Journal Entry ------------" +
+        colorama.Style.RESET_ALL
+    )
+    print(colorama.Fore.CYAN + f"Title: {title}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Content: {content}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Mood Category: {mood_category}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Mood Score: {mood_score}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Energy Level: {energy_level}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Free Time: {free_time_display}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Weather: {weather_result}" + colorama.Style.RESET_ALL)
+
+    print(
+        colorama.Fore.GREEN +
+        "\nRecommendations:" +
+        colorama.Style.RESET_ALL
+    )
+
+    print(
+        colorama.Fore.GREEN +
+        recommendation_result +
+        colorama.Style.RESET_ALL
+    )
+
+    print(
+        colorama.Fore.GREEN +
+        "\nJournal entry created successfully." +
+        colorama.Style.RESET_ALL
+    )
 
     # TODO:
     # Send the collected data to the API/database once integration is complete.
@@ -240,7 +455,8 @@ def add_journal_entry():
     # mood_score_id
     # energy_level_id
     # free_time
-    # weather
+    # weather_result
+    # recommendation_result
 
 def edit_journal_entry():
     pass
