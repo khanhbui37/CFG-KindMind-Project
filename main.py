@@ -8,6 +8,7 @@ from datetime import datetime
 import requests
 from dotenv import load_dotenv
 import os
+import re
 load_dotenv()
 
 BASE_URL = "http://127.0.0.1:5000"       # set base url
@@ -310,9 +311,103 @@ def login_menu():
             print("Invalid Input Please Try Again!")
             continue
 
+def validate_user_name(name):
+    if not name.strip():
+        print("Name cannot be empty.")
+        return True
+
+    if len(name.strip()) < 2:
+        print("Name must be at least 2 characters.")
+        return True
+
+    if not re.match(r"^[A-Za-z ]+$", name):
+        print("Name can only contain letters and spaces.")
+        return True
+
+    return False
+
+def validate_user_email(email):
+    pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+
+    if not re.match(pattern, email):
+        print("Invalid email format.")
+        return True
+
+    return False
+
+def validate_password(password):
+    if len(password) < 7:
+        print("Password must be at least 7 characters.")
+        return True
+
+    if not re.search(r"[A-Z]", password):
+        print("Password must contain an uppercase letter.")
+        return True
+
+    if not re.search(r"[a-z]", password):
+        print("Password must contain a lowercase letter.")
+        return True
+
+    if not re.search(r"\d", password):
+        print("Password must contain a number.")
+        return True
+
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        print("Password must contain a special character.")
+        return True
+    return False
 
 def post_registration_info():
-    pass
+    print("\n=== REGISTER ===")
+
+    name_prompt=True
+    while name_prompt==True:
+        name = input(colorama.Fore.BLUE +"Name: ").strip()
+        name_prompt=validate_user_name(name)
+
+    email_prompt=True
+    while email_prompt==True:
+        email = input(colorama.Fore.BLUE +"Email: "+colorama.Style.RESET_ALL).strip()
+        email_prompt=validate_user_email(email)
+
+    pwd_prompt=True
+    while pwd_prompt==True:
+
+        print("Pwd must contain at least:")
+        print("1. 7 characters")
+        print("2. a uppercase letter")
+        print("3. a lowercase letter")
+        print("4. a special character")
+        print("5. a number")
+        password = input(colorama.Fore.BLUE +"Password: "+colorama.Style.RESET_ALL)
+        pwd_prompt=validate_password(password)
+
+    reg_info = {
+        "name": name,
+        "email": email,
+        "password": password
+    }
+
+    try:
+        response = requests.post(
+            f"{BASE_URL}/register",
+            json=reg_info,
+            timeout=10
+        )
+
+        data = response.json()
+
+        if response.status_code == 201:
+            print("\nRegistration successful!")
+
+        else:
+            print(f"\nRegistration failed: {data.get('message')}")
+
+    except requests.exceptions.ConnectionError:
+        print("Could not connect to API server.")
+
+    except Exception as e:
+        print(f"Error: {e}")
 
 def view_journal_entry():
     pass
@@ -412,33 +507,43 @@ def get_recommendations(category, mood, energy, free_time, weather):
 
         return "\n".join(f"• {item}" for item in recommendations)
 
+
 def view_mood_summary():
-    # Get summary data from database
-    current_user_id = input("Please enter your user ID: ")
+    user_id = input("Please enter your user ID: ")
 
-    summary = get_user_mood_summary(current_user_id)
+    try:
+        response = requests.post(
+            f"{BASE_URL}/mood_summary",
+            json={"user_id": user_id}
+        )
 
-    if not summary:
-        print("No data found.")
-        return
+        data = response.json()
 
-    most_common_mood = get_common_mood_category(current_user_id)
+        if response.status_code != 200:
+            print(data.get("error", "Unknown error"))
+            return
 
-    print("\n=================================")
-    print("MOOD SUMMARY")
-    print("=================================")
+        summary = data["summary"]
 
-    print(f"Total Entries: {summary['total_entries']}")
-    print(f"Positive: {summary['positive_entries']}")
-    print(f"Neutral: {summary['neutral_entries']}")
-    print(f"Negative: {summary['negative_entries']}")
-    print(f"Ambiguous: {summary['ambiguous_entries']}")
+        print("\n=================================")
+        print("MOOD SUMMARY")
+        print("=================================")
 
-    print(f"\nMost Common Mood: {most_common_mood}")
-    print(f"Average Mood Score: {summary['average_score_id']}")
-    print(f"Average Energy: {summary['average_energy_id']}")
+        print(f"Total Entries: {summary['total_entries']}")
+        print(f"Positive: {summary['positive_entries']}")
+        print(f"Neutral: {summary['neutral_entries']}")
+        print(f"Negative: {summary['negative_entries']}")
+        print(f"Ambiguous: {summary['ambiguous_entries']}")
 
-    print("\n=================================")
+        print(f"\nMost Common Mood: {data['most_common_mood']}")
+        print(f"Average Mood Score: {summary['average_score_id']}")
+        print(f"Average Energy: {summary['average_energy_id']}")
+
+        print("\n=================================")
+
+    except requests.exceptions.RequestException as e:
+        print(f"API request failed: {e}")
+
 
 def logout():
     pass
