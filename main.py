@@ -168,13 +168,143 @@ def post_registration_info():
     pass
 
 def view_journal_entry():
-    pass
+
+    # Display the View Journal Entries heading.
+    print(
+        colorama.Fore.CYAN +
+        "\n========== VIEW JOURNAL ENTRIES ==========" +
+        colorama.Style.RESET_ALL
+    )
+
+    # TODO:
+    # Replace this mock data with real journal entries from the database/API
+    # once backend integration is ready.
+    #
+    # Currently this list is only used for testing the Console UI.
+    journal_entries = [
+        {
+            "entry_id": 1,
+            "title": "Test Entry 1",
+            "content": "Today was a good day.",
+            "mood_category": "Positive",
+            "mood_score": "Fantastic",
+            "energy_level": "Driven",
+            "free_time": "Yes",
+            "weather": "Rain",
+            "recommendations": "Keep up the positive momentum."
+        },
+        {
+            "entry_id": 2,
+            "title": "Test Entry 2",
+            "content": "Feeling a bit tired today.",
+            "mood_category": "Negative",
+            "mood_score": "Bad",
+            "energy_level": "Drained",
+            "free_time": "No",
+            "weather": "Clouds",
+            "recommendations": "Prioritise rest and hydration."
+        }
+    ]
+
+    # Check whether any journal entries exist.
+    # If the list is empty, notify the user and exit the function.
+    if not journal_entries:
+        print(
+            colorama.Fore.RED +
+            "\nNo journal entries found." +
+            colorama.Style.RESET_ALL
+        )
+        return
+
+    # Display all available journal entries so the user can
+    # choose which entry they would like to view.
+    print(
+        colorama.Fore.YELLOW +
+        "\nAvailable journal entries:" +
+        colorama.Style.RESET_ALL
+    )
+
+    for entry in journal_entries:
+        print(
+            colorama.Fore.CYAN +
+            f"{entry['entry_id']}. {entry['title']} - Mood: {entry['mood_category']}" +
+            colorama.Style.RESET_ALL
+        )
+
+    # Ask the user which journal entry they would like to view.
+    # Validation ensures the selected entry ID exists.
+    while True:
+        entry_choice = input(
+            colorama.Fore.LIGHTBLUE_EX +
+            "\nEnter the entry ID you want to view: " +
+            colorama.Style.RESET_ALL
+        )
+
+        # Check that the user entered a number.
+        if entry_choice.isdigit():
+            entry_choice = int(entry_choice)
+
+            selected_entry = None
+
+            # Search for the journal entry that matches
+            # the ID entered by the user.
+            for entry in journal_entries:
+                if entry["entry_id"] == entry_choice:
+                    selected_entry = entry
+                    break
+
+            # If a matching entry is found, continue.
+            if selected_entry:
+                break
+
+        # Display an error message if the selected ID is invalid.
+        print(
+            colorama.Fore.RED +
+            "Invalid entry ID. Please choose an entry from the list." +
+            colorama.Style.RESET_ALL
+        )
+
+    # Display the full details of the selected journal entry.
+    print(
+        colorama.Fore.CYAN +
+        "\n---------- Selected Journal Entry ------------" +
+        colorama.Style.RESET_ALL
+    )
+
+    print(colorama.Fore.CYAN + f"Entry ID: {selected_entry['entry_id']}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Title: {selected_entry['title']}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Content: {selected_entry['content']}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Mood Category: {selected_entry['mood_category']}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Mood Score: {selected_entry['mood_score']}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Energy Level: {selected_entry['energy_level']}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Free Time: {selected_entry['free_time']}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Weather: {selected_entry['weather']}" + colorama.Style.RESET_ALL)
+
+    # Display the recommendations associated with the journal entry.
+    # These recommendations will eventually come from the database/API.
+    print(
+        colorama.Fore.GREEN +
+        "\nRecommendations:" +
+        colorama.Style.RESET_ALL
+    )
+
+    print(
+        colorama.Fore.GREEN +
+        selected_entry["recommendations"] +
+        colorama.Style.RESET_ALL
+    )
+
+    # TODO:
+    # Retrieve journal entries from the API/database once backend
+    # integration is complete rather than using temporary test data.
 
 def add_journal_entry():
+
+    # Display the Add Journal Entry heading.
     print(colorama.Fore.RED + "\nADD JOURNAL ENTRY" + colorama.Style.RESET_ALL)
 
-    # Ask the user for the journal title and main journal content.
-    # This information will eventually be stored in the journal_entries table.
+    # Collect the journal title from the user.
+    # Validation ensures the title cannot be left blank.
     while True:
         title = input(
             colorama.Fore.LIGHTBLUE_EX +
@@ -191,6 +321,8 @@ def add_journal_entry():
             colorama.Style.RESET_ALL
         )
 
+    # Collect the journal content from the user.
+    # Validation ensures the journal entry is not empty.
     while True:
         content = input(
             colorama.Fore.LIGHTBLUE_EX +
@@ -207,8 +339,8 @@ def add_journal_entry():
             colorama.Style.RESET_ALL
         )
 
-    # Display the mood categories available to the user.
-    # These options match the values stored in the mood_category table.
+    # Display available mood categories.
+    # These values match the mood_category table in the database.
     print(colorama.Fore.YELLOW + "\nChoose your mood category:" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "1. Negative" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "2. Neutral" + colorama.Style.RESET_ALL)
@@ -221,7 +353,8 @@ def add_journal_entry():
             "Enter mood category choice: " +
             colorama.Style.RESET_ALL
         )
-
+        # Validate the user's mood category selection.
+        # Only options 1-4 are accepted.
         if mood_category_choice in ["1", "2", "3", "4"]:
             break
 
@@ -231,9 +364,9 @@ def add_journal_entry():
             colorama.Style.RESET_ALL
         )
 
-    # Convert the user's menu selection into both:
-    # 1. A user-friendly mood category name.
-    # 2. The matching mood_category_id that will later be sent to the database.
+    # Convert the user's menu choice into:
+    # 1. A mood category name for display.
+    # 2. A mood_category_id for future database storage.
     if mood_category_choice == "1":
         mood_category_id = 1
         mood_category = "Negative"
@@ -250,8 +383,8 @@ def add_journal_entry():
         mood_category_id = None
         mood_category = "Unknown"
 
-    # Display mood score options from the mood_score table.
-    # The user selects a number and we store both the score name and ID.
+    # Display available mood scores.
+    # These values match the mood_score table in the database.
     print(colorama.Fore.YELLOW + "\nChoose your mood score:" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "1. Terrible" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "2. Bad" + colorama.Style.RESET_ALL)
@@ -263,6 +396,8 @@ def add_journal_entry():
     print(colorama.Fore.YELLOW + "8. Mixed" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "9. Unsure" + colorama.Style.RESET_ALL)
 
+    # Validate the user's mood score selection.
+    # Only options 1-9 are accepted.
     while True:
         mood_score_choice = input(
             colorama.Fore.LIGHTBLUE_EX +
@@ -270,6 +405,9 @@ def add_journal_entry():
             colorama.Style.RESET_ALL
         )
 
+        # Convert the user's menu choice into:
+        # 1. A mood score name for display.
+        # 2. A mood_score_id for future database storage.
         if mood_score_choice in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
             break
 
@@ -313,8 +451,8 @@ def add_journal_entry():
         mood_score_id = None
         mood_score = "Unknown"
 
-    # Collect the user's current energy level.
-    # This will help support recommendations and mood analytics later.
+    # Display available energy levels.
+    # These values match the energy_level table in the database.
     print(colorama.Fore.YELLOW + "\nChoose your energy level:" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "1. Drained" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "2. Sluggish" + colorama.Style.RESET_ALL)
@@ -324,6 +462,8 @@ def add_journal_entry():
     print(colorama.Fore.YELLOW + "6. Driven" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "7. Radiant" + colorama.Style.RESET_ALL)
 
+    # Validate the user's energy level selection.
+    # Only options 1-7 are accepted.
     while True:
         energy_choice = input(
             colorama.Fore.LIGHTBLUE_EX +
@@ -340,6 +480,9 @@ def add_journal_entry():
             colorama.Style.RESET_ALL
         )
 
+    # Convert the user's menu choice into:
+    # 1. An energy level name for display.
+    # 2. An energy_level_id for future database storage.
     if energy_choice == "1":
         energy_level_id = 1
         energy_level = "Drained"
@@ -365,10 +508,14 @@ def add_journal_entry():
         energy_level_id = None
         energy_level = "Unknown"
 
+    # Ask whether the user has free time available today.
+    # This information is used when generating recommendations.
     print(colorama.Fore.YELLOW + "\nDo you have free time today?" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "1. Yes" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "2. No" + colorama.Style.RESET_ALL)
 
+    # Accept multiple valid responses such as:
+    # 1, Yes, Y, 2, No, or N.
     while True:
         free_time_choice = input(
             colorama.Fore.LIGHTBLUE_EX +
@@ -392,7 +539,9 @@ def add_journal_entry():
             colorama.Style.RESET_ALL
         )
 
-    # Get weather from the weather API.
+    # Retrieve the user's current weather conditions using
+    # the OpenWeather API. Continue prompting until a valid
+    # city is entered and weather data is returned.
     while True:
         weather_result = get_user_input_for_weather()
 
@@ -405,8 +554,9 @@ def add_journal_entry():
             colorama.Style.RESET_ALL
         )
 
-    # Generate recommendations based on the user's journal choices.
-    # This recommendation text will later be stored in the journal_entries table.
+    # Generate personalised recommendations using:
+    # mood category, mood score, energy level,
+    # free time availability, and weather conditions.
     recommendation_result = generate_recommendations(
         mood_category,
         mood_score,
@@ -415,6 +565,8 @@ def add_journal_entry():
         weather_result
     )
 
+    # Display a summary of the journal entry so the user
+    # can review all information before it is saved.
     print(
         colorama.Fore.CYAN +
         "\n---------- Journal Entry ------------" +
@@ -428,6 +580,8 @@ def add_journal_entry():
     print(colorama.Fore.CYAN + f"Free Time: {free_time_display}" + colorama.Style.RESET_ALL)
     print(colorama.Fore.CYAN + f"Weather: {weather_result}" + colorama.Style.RESET_ALL)
 
+    # Display the personalised recommendations generated
+    # from the user's journal entry selections.
     print(
         colorama.Fore.GREEN +
         "\nRecommendations:" +
@@ -448,18 +602,186 @@ def add_journal_entry():
 
     # TODO:
     # Send the collected data to the API/database once integration is complete.
-    # Data to be stored includes:
-    # title
-    # content
-    # mood_category_id
-    # mood_score_id
-    # energy_level_id
-    # free_time
-    # weather_result
-    # recommendation_result
+    #
+    # Data to be stored:
+    # - title
+    # - content
+    # - mood_category_id
+    # - mood_score_id
+    # - energy_level_id
+    # - free_time
+    # - weather_result
+    # - recommendation_result
 
 def edit_journal_entry():
-    pass
+
+    # Display the Edit Journal Entry heading.
+    print(
+        colorama.Fore.CYAN +
+        "\n========== EDIT JOURNAL ENTRY ==========" +
+        colorama.Style.RESET_ALL
+    )
+
+    # TODO:
+    # Replace this mock data with real journal entries from the database/API
+    # once backend integration is ready.
+    #
+    # Currently this list is only used for testing the Console UI.
+    journal_entries = [
+        {
+            "entry_id": 1,
+            "title": "Test Entry 1",
+            "content": "Today was a good day.",
+            "mood_category": "Positive"
+        },
+        {
+            "entry_id": 2,
+            "title": "Test Entry 2",
+            "content": "Feeling a bit tired today.",
+            "mood_category": "Negative"
+        }
+    ]
+
+    # Check whether any journal entries exist.
+    # If the list is empty, notify the user and exit the function.
+    if not journal_entries:
+        print(
+            colorama.Fore.RED +
+            "\nNo journal entries found." +
+            colorama.Style.RESET_ALL
+        )
+        return
+
+    # Display all available journal entries so the user can
+    # choose which entry they would like to edit.
+    print(
+        colorama.Fore.YELLOW +
+        "\nAvailable journal entries:" +
+        colorama.Style.RESET_ALL
+    )
+
+    for entry in journal_entries:
+        print(
+            colorama.Fore.CYAN +
+            f"{entry['entry_id']}. {entry['title']} - Mood: {entry['mood_category']}" +
+            colorama.Style.RESET_ALL
+        )
+
+    # Ask the user which journal entry they would like to edit.
+    # Validation ensures the selected entry ID exists.
+    while True:
+        entry_choice = input(
+            colorama.Fore.LIGHTBLUE_EX +
+            "\nEnter the entry ID you want to edit: " +
+            colorama.Style.RESET_ALL
+        )
+
+        # Check that the user entered a number.
+        if entry_choice.isdigit():
+            entry_choice = int(entry_choice)
+
+            selected_entry = None
+
+            # Search for the matching journal entry.
+            for entry in journal_entries:
+                if entry["entry_id"] == entry_choice:
+                    selected_entry = entry
+                    break
+
+            # If a matching entry is found, continue.
+            if selected_entry:
+                break
+
+        # Display an error message if the selected ID is invalid.
+        print(
+            colorama.Fore.RED +
+            "Invalid entry ID. Please choose an entry from the list." +
+            colorama.Style.RESET_ALL
+        )
+
+    # Display the current journal entry details before editing.
+    # This allows the user to see the existing information.
+    print(
+        colorama.Fore.CYAN +
+        "\nCurrent Entry Details:" +
+        colorama.Style.RESET_ALL
+    )
+
+    print(
+        colorama.Fore.CYAN +
+        f"Title: {selected_entry['title']}" +
+        colorama.Style.RESET_ALL
+    )
+
+    print(
+        colorama.Fore.CYAN +
+        f"Content: {selected_entry['content']}" +
+        colorama.Style.RESET_ALL
+    )
+
+    # Ask the user for a new title.
+    # Pressing Enter will keep the current title unchanged.
+    new_title = input(
+        colorama.Fore.LIGHTBLUE_EX +
+        "\nEnter new title, or press Enter to keep current title: " +
+        colorama.Style.RESET_ALL
+    )
+
+    # Ask the user for new journal content.
+    # Pressing Enter will keep the current content unchanged.
+    new_content = input(
+        colorama.Fore.LIGHTBLUE_EX +
+        "Enter new content, or press Enter to keep current content: " +
+        colorama.Style.RESET_ALL
+    )
+
+    # Only update the title if the user entered a value.
+    # Otherwise keep the original title.
+    if new_title.strip():
+        selected_entry["title"] = new_title
+
+    # Only update the content if the user entered a value.
+    # Otherwise keep the original content.
+    if new_content.strip():
+        selected_entry["content"] = new_content
+
+    # Inform the user that the journal entry has been updated.
+    print(
+        colorama.Fore.GREEN +
+        "\nJournal entry updated successfully." +
+        colorama.Style.RESET_ALL
+    )
+
+    # Display the updated journal entry so the user can
+    # confirm the changes have been applied correctly.
+    print(
+        colorama.Fore.CYAN +
+        "\n---------- Updated Journal Entry ------------" +
+        colorama.Style.RESET_ALL
+    )
+
+    print(
+        colorama.Fore.CYAN +
+        f"Entry ID: {selected_entry['entry_id']}" +
+        colorama.Style.RESET_ALL
+    )
+
+    print(
+        colorama.Fore.CYAN +
+        f"Title: {selected_entry['title']}" +
+        colorama.Style.RESET_ALL
+    )
+
+    print(
+        colorama.Fore.CYAN +
+        f"Content: {selected_entry['content']}" +
+        colorama.Style.RESET_ALL
+    )
+
+    # TODO:
+    # Replace the temporary update logic with an API/database update request.
+    # Once integrated, changes will be permanently saved to the database
+    # instead of being stored in temporary test data.
 
 def search_entries():
     pass
@@ -471,7 +793,140 @@ def to_view_mood_summary():
     pass
 
 def delete_entry():
-    pass
+    # Display the Delete Journal Entry heading.
+    print(
+        colorama.Fore.CYAN +
+        "\n========== DELETE JOURNAL ENTRY ==========" +
+        colorama.Style.RESET_ALL
+    )
+
+    # TODO:
+    # Replace this mock data with real journal entries from the database/API.
+    # Currently this list is recreated every time the function runs,
+    # so deleted entries will reappear when the program is restarted.
+    journal_entries = [
+        {
+            "entry_id": 1,
+            "title": "Test Entry 1",
+            "content": "Today was a good day.",
+            "mood_category": "Positive"
+        },
+        {
+            "entry_id": 2,
+            "title": "Test Entry 2",
+            "content": "Feeling a bit tired today.",
+            "mood_category": "Negative"
+        }
+    ]
+
+    # Check if there are any journal entries available.
+    # If the list is empty, inform the user and exit the function.
+    if not journal_entries:
+        print(
+            colorama.Fore.RED +
+            "\nNo journal entries found." +
+            colorama.Style.RESET_ALL
+        )
+        return
+
+    # Display all available journal entries so the user can
+    # choose which one they would like to delete.
+    print(
+        colorama.Fore.YELLOW +
+        "\nAvailable journal entries:" +
+        colorama.Style.RESET_ALL
+    )
+
+    for entry in journal_entries:
+        print(
+            colorama.Fore.CYAN +
+            f"{entry['entry_id']}. {entry['title']} - Mood: {entry['mood_category']}" +
+            colorama.Style.RESET_ALL
+        )
+
+    # Ask the user which journal entry they would like to delete.
+    # Validation ensures a valid entry ID is selected.
+    while True:
+        entry_choice = input(
+            colorama.Fore.LIGHTBLUE_EX +
+            "\nEnter the entry ID you want to delete: " +
+            colorama.Style.RESET_ALL
+        )
+
+        # Check the user entered a number.
+        if entry_choice.isdigit():
+            entry_choice = int(entry_choice)
+
+            selected_entry = None
+
+            # Search through the journal entries to find
+            # the entry matching the chosen ID.
+            for entry in journal_entries:
+                if entry["entry_id"] == entry_choice:
+                    selected_entry = entry
+                    break
+
+            # If a matching entry was found, continue.
+            if selected_entry:
+                break
+
+        # Display an error message if the entry ID does not exist.
+        print(
+            colorama.Fore.RED +
+            "Invalid entry ID. Please choose an entry from the list." +
+            colorama.Style.RESET_ALL
+        )
+
+    # Display the selected entry before deletion so the user
+    # can confirm they have chosen the correct journal entry.
+    print(colorama.Fore.CYAN + "\nSelected Entry:" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Entry ID: {selected_entry['entry_id']}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Title: {selected_entry['title']}" + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f"Content: {selected_entry['content']}" + colorama.Style.RESET_ALL)
+
+    # Ask the user to confirm whether they really want
+    # to delete the selected journal entry.
+    while True:
+        confirm_delete = input(
+            colorama.Fore.LIGHTBLUE_EX +
+            "\nAre you sure you want to delete this entry? (Y/N): " +
+            colorama.Style.RESET_ALL
+        ).lower()
+
+        # If the user confirms deletion,
+        # remove the selected entry from the list.
+        if confirm_delete in ["y", "yes"]:
+            journal_entries.remove(selected_entry)
+
+            print(
+                colorama.Fore.GREEN +
+                "\nJournal entry deleted successfully." +
+                colorama.Style.RESET_ALL
+            )
+            break
+
+        # If the user chooses not to delete,
+        # leave the journal entry unchanged.
+        elif confirm_delete in ["n", "no"]:
+            print(
+                colorama.Fore.YELLOW +
+                "\nDelete cancelled. Journal entry was not deleted." +
+                colorama.Style.RESET_ALL
+            )
+            break
+
+        # Validation to ensure only Y or N responses are accepted.
+        else:
+            print(
+                colorama.Fore.RED +
+                "Invalid choice. Please enter Y or N." +
+                colorama.Style.RESET_ALL
+            )
+
+    # TODO:
+    # Replace journal_entries.remove() with an API/database delete request.
+    # Once integrated, the journal entry will be permanently removed
+    # from the database rather than from a temporary test list.
 
 def logout():
     pass
