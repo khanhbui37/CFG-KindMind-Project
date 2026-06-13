@@ -29,7 +29,7 @@ def create_database():
                                              name VARCHAR(100) NOT NULL,
                                              email VARCHAR(100) UNIQUE NOT NULL,
                                              hashed_password VARCHAR(255) NOT NULL,
-                                             created_at DATE NOT NULL)""",
+                                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""",
             "mood_category": """ CREATE TABLE IF NOT EXISTS mood_category (
                                              category_id  INT PRIMARY KEY AUTO_INCREMENT,
                                              category_name VARCHAR(100) UNIQUE NOT NULL)""",
@@ -68,7 +68,6 @@ def create_database():
         try:
             for name, query in tables.items():
                 cursor.execute(query)
-                print(f"Created table {name}")
 
         except mysql.connector.Error as error:
             print(f"Error creating table: {error}")
@@ -166,6 +165,88 @@ def insert_default_values(cursor):
         ]
     )
 
+
+def create_user(data):
+
+    db = None
+    cursor = None
+
+    try:
+        db = get_connection()  # connect to database
+        cursor = db.cursor()
+
+
+        query = """
+            INSERT INTO users
+            (name, email, hashed_password)
+            VALUES (%s, %s, %s)
+            """
+
+        values = (
+            data["name"],
+            data["email"],
+            data["password"]
+        )
+
+        cursor.execute("""USE kindMind""")
+        cursor.execute(query, values)
+
+        db.commit()
+
+        return {"message":"User Successfully Added"}
+
+    except mysql.connector.IntegrityError as err:
+        return {"error": f"Integrity error: {err}"}
+
+    except mysql.connector.DataError as err:
+        return {"error": f"Invalid data: {err}"}
+
+    except mysql.connector.ProgrammingError as err:
+        return {"error": f"SQL error: {err}"}
+
+    except mysql.connector.OperationalError as err:
+        return {"error": f"Connection issue: {err}"}
+
+    except mysql.connector.Error as err:
+        return {"error": f"Database error: {err}"}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+def get_logged_in_user_id(user_email):
+    db = None
+    cursor = None
+    logged_info = None
+
+    try:
+        db = get_connection()
+        cursor = db.cursor(dictionary=True)
+
+        query = """
+            SELECT user_id FROM users 
+            WHERE email = %s"""
+
+        cursor.execute("USE kindMind")
+        cursor.execute(query, (user_email,))
+        logged_info = cursor.fetchone()
+
+    except mysql.connector.Error as error:
+        print(f"Something went wrong: {error}")
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+    return logged_info["user_id"] if logged_info else None
+
+
+
+
 def get_user_mood_summary(user_id):
     db = None
     cursor = None
@@ -226,6 +307,8 @@ def get_user_mood_summary(user_id):
 def get_common_mood_category(user_id):
     db = None
     cursor = None
+    common_category = None
+
     try:
         db = get_connection()
         cursor = db.cursor(dictionary=True)
@@ -245,8 +328,6 @@ def get_common_mood_category(user_id):
         cursor.execute(query, (user_id,))
         common_category = cursor.fetchone()
 
-        return common_category["category_name"] if common_category else None
-
     except mysql.connector.Error as error:
         print(f"Something went wrong: {error}")
 
@@ -255,3 +336,5 @@ def get_common_mood_category(user_id):
             cursor.close()
         if db:
             db.close()
+
+    return common_category["category_name"] if common_category else None

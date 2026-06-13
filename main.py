@@ -2,7 +2,7 @@ from app import app
 import logging
 import threading
 import time
-from db_utils import create_database, get_user_mood_summary, get_common_mood_category
+from db_utils import create_database, get_logged_in_user_id
 import colorama
 from datetime import datetime
 import requests
@@ -21,6 +21,7 @@ def start_flask():
     log.setLevel(logging.ERROR)
 
     app.run(debug=False)
+
 
 def get_current_weather(current_city):
 
@@ -53,18 +54,56 @@ def get_user_input_for_weather():
     return weather
 
 
+
 def post_login_info():
-    if_logged_in = True #Temporarily set to TRUE
-    #Let to implement login function
+
+    password_validation = True
+    email_validation = True
+    if_logged_in = False
+
+    while email_validation:
+        user_email = input("\nEnter your email: ")
+        email_validation = validate_user_email(user_email)
+
+    while password_validation:
+        user_password = input("\nEnter your password: ")
+        password_validation = validate_user_password(user_password)
+
+
+    log_in_info = {
+        "email": user_email,
+        "password": user_password
+    }
+
+    try:
+        response = requests.post(
+            f"{BASE_URL}/login",
+            json=log_in_info,
+            timeout=10
+        )
+
+        data = response.json()
+
+        if response.status_code == 200:
+            print(f"\nLogging In: {data.get('message')}")
+            if_logged_in = True
+
+        else:
+            print(f"\nLogin failed: {data.get('errors')}")
+
+    except requests.exceptions.ConnectionError:
+        print("Could not connect to API server.")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
     if if_logged_in:
-        login_menu()
-    else:
-        print("Invalid Credentials")
+        logged_in_id=get_logged_in_user_id(user_email)
+        login_menu(logged_in_id)
 
 
-def login_menu():
+def login_menu(logged_in_id):
 
-    print(colorama.Fore.RED + "\nYOU HAVE SUCCESSFULLY LOGGED IN")
     print(colorama.Fore.YELLOW + "\na. To Add an Entry to Journal enter " + colorama.Fore.RED + " 1" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "b. To View Journal Entries enter " + colorama.Fore.RED + " 2" + colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW + "c. To Edit Journal Entry enter " + colorama.Fore.RED + " 3" + colorama.Style.RESET_ALL)
@@ -296,7 +335,7 @@ def login_menu():
             break
 
         elif login_input == "6":
-            view_mood_summary()
+            view_mood_summary(logged_in_id)
             break
 
         elif login_input == "7":
@@ -335,7 +374,7 @@ def validate_user_email(email):
 
     return False
 
-def validate_password(password):
+def validate_user_password(password):
     if len(password) < 7:
         print("Password must be at least 7 characters.")
         return True
@@ -358,20 +397,20 @@ def validate_password(password):
     return False
 
 def post_registration_info():
-    print("\n=== REGISTER ===")
+    print("\n=== USER REGISTRATION ===")
 
     name_prompt=True
-    while name_prompt==True:
+    while name_prompt:
         name = input(colorama.Fore.BLUE +"Name: ").strip()
         name_prompt=validate_user_name(name)
 
     email_prompt=True
-    while email_prompt==True:
+    while email_prompt:
         email = input(colorama.Fore.BLUE +"Email: "+colorama.Style.RESET_ALL).strip()
         email_prompt=validate_user_email(email)
 
     pwd_prompt=True
-    while pwd_prompt==True:
+    while pwd_prompt:
 
         print("Pwd must contain at least:")
         print("1. 7 characters")
@@ -380,7 +419,7 @@ def post_registration_info():
         print("4. a special character")
         print("5. a number")
         password = input(colorama.Fore.BLUE +"Password: "+colorama.Style.RESET_ALL)
-        pwd_prompt=validate_password(password)
+        pwd_prompt=validate_user_password(password)
 
     reg_info = {
         "name": name,
@@ -398,7 +437,9 @@ def post_registration_info():
         data = response.json()
 
         if response.status_code == 201:
-            print("\nRegistration successful!")
+            print("\nSuccessfully Registered!")
+            print("\n======LOGIN==========")
+            post_login_info()
 
         else:
             print(f"\nRegistration failed: {data.get('message')}")
@@ -508,13 +549,12 @@ def get_recommendations(category, mood, energy, free_time, weather):
         return "\n".join(f"• {item}" for item in recommendations)
 
 
-def view_mood_summary():
-    user_id = input("Please enter your user ID: ")
+def view_mood_summary(logged_in_id):
 
     try:
-        response = requests.post(
-            f"{BASE_URL}/mood_summary",
-            json={"user_id": user_id}
+        response = requests.get(
+            f"{BASE_URL}/login/mood_summary",
+            params={"user_id": logged_in_id}
         )
 
         data = response.json()
@@ -557,8 +597,9 @@ def run():
     url_search = f"{BASE_URL}/search"
 
     # Print Main Menu
-    print(colorama.Fore.BLUE +"\n WELCOME TO KindMind SYSTEM!!\n")
-    print(colorama.Fore.YELLOW + "a. To Register enter " + colorama.Fore.RED + " 1"+ colorama.Style.RESET_ALL)
+    print(colorama.Fore.BLUE +"\n WELCOME TO KindMind SYSTEM!!"+colorama.Style.RESET_ALL)
+    print(f"\nTo view KindMind API Home Page click: {BASE_URL}")
+    print(colorama.Fore.YELLOW + "\na. To Register enter " + colorama.Fore.RED + " 1"+ colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW +"b. To Login enter " + colorama.Fore.RED + " 2"+ colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW +"c. To Exit the system enter"+ colorama.Fore.RED + " 3"+colorama.Style.RESET_ALL)
 
