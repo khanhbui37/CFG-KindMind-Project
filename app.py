@@ -79,7 +79,7 @@ def validate_user_fields (data):
 
     return errors if errors else None
 
-# Helper fi=unction to validate login info.
+# Helper function to validate login info.
 def validate_login_data(data):
     errors = []
 
@@ -208,7 +208,7 @@ def login():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/login//mood_summary", methods=["GET"])
+@app.route("/login/mood_summary", methods=["GET"])
 def mood_summary():
 
     try:
@@ -251,10 +251,6 @@ def mood_summary():
         return jsonify({
             "error": f"Server error: {str(e)}"
         }), 500
-
-
-
-
 
 
 
