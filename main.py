@@ -57,6 +57,9 @@ def get_user_input_for_weather():
 
 def post_login_info():
 
+    user_email = None
+    user_password = None
+
     password_validation = True
     email_validation = True
     if_logged_in = False
@@ -399,6 +402,10 @@ def validate_user_password(password):
 def post_registration_info():
     print("\n=== USER REGISTRATION ===")
 
+    name = None
+    email = None
+    password = None
+
     name_prompt=True
     while name_prompt:
         name = input(colorama.Fore.BLUE +"Name: ").strip()
@@ -592,12 +599,9 @@ def logout():
 # Function to interact with API
 def run():
 
-    # set required urls here to view. Below are the example url extensions.
-    url_view_journal = f"{BASE_URL}/view_journal"
-    url_search = f"{BASE_URL}/search"
-
     # Print Main Menu
     print(colorama.Fore.BLUE +"\n WELCOME TO KindMind SYSTEM!!"+colorama.Style.RESET_ALL)
+    # Alternatively to the console display, users can also be provided with the direct link to API for functions like view_journal_entry in login_menu() to view the data directly in API, like the below HomePage url(hardcoded in print statement).
     print(f"\nTo view KindMind API Home Page click: {BASE_URL}")
     print(colorama.Fore.YELLOW + "\na. To Register enter " + colorama.Fore.RED + " 1"+ colorama.Style.RESET_ALL)
     print(colorama.Fore.YELLOW +"b. To Login enter " + colorama.Fore.RED + " 2"+ colorama.Style.RESET_ALL)
