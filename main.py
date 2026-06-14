@@ -133,30 +133,7 @@ def login_menu(logged_in_id):
             break
 
         elif login_input == "4":
-            user_date = input("\nEnter date to search an entry (dd/mm/yyyy): ")
-
-            try:
-                search_date = datetime.strptime(user_date, "%d/%m/%Y")
-                print("Valid date:", search_date.date())
-
-                url_search_date = f"{BASE_URL}/journal_entries/{user_date}"
-
-                response = requests.get(url_search_date)
-
-                if response.status_code == 200:
-                    data = response.json()  # Assuming API returns JSON
-                    print("\nEntries found:")
-                    print(data)
-                elif response.status_code == 404:
-                    print("No entries found for this date.")
-                else:
-                    print(f"Error: {response.status_code}")
-                    print(response.text)
-
-            except ValueError:
-                print("Invalid date. Please use the format dd/mm/yyyy.")
-            break
-
+            search_entries(logged_in_id)
 
         elif login_input == "5":
 
@@ -580,7 +557,7 @@ def view_journal_entry():
 
     print(
         colorama.Fore.GREEN +
-        selected_entry["recommendations"] +
+        f"{selected_entry['recommendations']}" +
         colorama.Style.RESET_ALL
     )
 
@@ -658,19 +635,14 @@ def add_journal_entry():
     # 1. A mood category name for display.
     # 2. A mood_category_id for future database storage.
     if mood_category_choice == "1":
-        mood_category_id = 1
         mood_category = "Negative"
     elif mood_category_choice == "2":
-        mood_category_id = 2
         mood_category = "Neutral"
     elif mood_category_choice == "3":
-        mood_category_id = 3
         mood_category = "Positive"
     elif mood_category_choice == "4":
-        mood_category_id = 4
         mood_category = "Ambiguous"
     else:
-        mood_category_id = None
         mood_category = "Unknown"
 
     # Display available mood scores.
@@ -711,34 +683,24 @@ def add_journal_entry():
     # 1. A descriptive mood score.
     # 2. The matching mood_score_id for future database integration.
     if mood_score_choice == "1":
-        mood_score_id = 1
         mood_score = "Terrible"
     elif mood_score_choice == "2":
-        mood_score_id = 2
         mood_score = "Bad"
     elif mood_score_choice == "3":
-        mood_score_id = 3
         mood_score = "Off"
     elif mood_score_choice == "4":
-        mood_score_id = 4
         mood_score = "Ok"
     elif mood_score_choice == "5":
-        mood_score_id = 5
         mood_score = "Good"
     elif mood_score_choice == "6":
-        mood_score_id = 6
         mood_score = "Great"
     elif mood_score_choice == "7":
-        mood_score_id = 7
         mood_score = "Fantastic"
     elif mood_score_choice == "8":
-        mood_score_id = 8
         mood_score = "Mixed"
     elif mood_score_choice == "9":
-        mood_score_id = 9
         mood_score = "Unsure"
     else:
-        mood_score_id = None
         mood_score = "Unknown"
 
     # Display available energy levels.
@@ -774,28 +736,20 @@ def add_journal_entry():
     # 1. An energy level name for display.
     # 2. An energy_level_id for future database storage.
     if energy_choice == "1":
-        energy_level_id = 1
         energy_level = "Drained"
     elif energy_choice == "2":
-        energy_level_id = 2
         energy_level = "Sluggish"
     elif energy_choice == "3":
-        energy_level_id = 3
         energy_level = "Mellow"
     elif energy_choice == "4":
-        energy_level_id = 4
         energy_level = "Steady"
     elif energy_choice == "5":
-        energy_level_id = 5
         energy_level = "Vibrant"
     elif energy_choice == "6":
-        energy_level_id = 6
         energy_level = "Driven"
     elif energy_choice == "7":
-        energy_level_id = 7
         energy_level = "Radiant"
     else:
-        energy_level_id = None
         energy_level = "Unknown"
 
     # Ask whether the user has free time available today.
@@ -844,7 +798,7 @@ def add_journal_entry():
             colorama.Style.RESET_ALL
         )
 
-    # Generate personalised recommendations using:
+    # Generate personalized recommendations using:
     # mood category, mood score, energy level,
     # free time availability, and weather conditions.
     recommendation_result = get_recommendations(
@@ -870,7 +824,7 @@ def add_journal_entry():
     print(colorama.Fore.CYAN + f"Free Time: {free_time_display}" + colorama.Style.RESET_ALL)
     print(colorama.Fore.CYAN + f"Weather: {weather_result}" + colorama.Style.RESET_ALL)
 
-    # Display the personalised recommendations generated
+    # Display the personalized recommendations generated
     # from the user's journal entry selections.
     print(
         colorama.Fore.GREEN +
@@ -1026,12 +980,12 @@ def edit_journal_entry():
     )
 
     # Only update the title if the user entered a value.
-    # Otherwise keep the original title.
+    # Otherwise, keep the original title.
     if new_title.strip():
         selected_entry["title"] = new_title
 
     # Only update the content if the user entered a value.
-    # Otherwise keep the original content.
+    # Otherwise, keep the original content.
     if new_content.strip():
         selected_entry["content"] = new_content
 
@@ -1210,6 +1164,74 @@ def delete_entry():
     # Replace journal_entries.remove() with an API/database delete request.
     # Once integrated, the journal entry will be permanently removed
     # from the database rather than from a temporary test list.
+
+def search_entries(logged_in_id):
+
+    while True:
+        user_date = input("\nEnter date to search an entry (dd/mm/yyyy): ").strip()
+
+        try:
+            valid_date = datetime.strptime(user_date, "%d/%m/%Y")
+
+            # prevent future dates
+            if valid_date.date() > datetime.today().date():
+                print("Date date is a future date. Please try again.")
+                continue
+
+            # Date is valid
+            break
+
+        except ValueError:
+            print("Invalid date. Please enter a valid date in dd/mm/yyyy format.")
+
+
+    try:
+        response = requests.get(
+            f"{BASE_URL}/login/search_entries",
+            params={
+                "user_id": logged_in_id,
+                "user_date": user_date
+            }
+        )
+
+        data = response.json()
+
+        if response.status_code == 200:
+            data = response.json()  # Assuming API returns JSON
+            print("\nEntries found:")
+            print(data)
+        elif response.status_code == 404:
+            print("No entries found for this date.")
+        else:
+            print(f"Error: {response.status_code}")
+            print(response.text)
+
+        entries = data.get("data", [])
+
+        if not entries:
+            print("No entries found.")
+            return
+
+        for entry in entries:
+            print("\n=================================")
+            print(f"JOURNAL ENTRIES FOR {user_date}")
+            print("=================================")
+            print(f"Entry ID: {entry['entry_id']}")
+            print(f"Title: {entry['title']}")
+            print(f"Content: {entry['content']}")
+            print(f"Mood Category: {entry['mood_category_id']}")
+            print(f"Mood Score: {entry['mood_score_id']}")
+            print(f"Energy Level: {entry['energy_level']}")
+            print(f"Free Time: {entry['free_time']}")
+            print(f"Weather: {entry['weather']}")
+            print(f"Recommendations: {entry['recommendations']}")
+            print(f"Created At: {entry['created_at']}")
+
+            print("\n=================================")
+
+
+    except requests.exceptions.RequestException as e:
+        print(f"API request failed: {e}")
 
 
 def get_recommendations(category, mood, energy, free_time, weather):

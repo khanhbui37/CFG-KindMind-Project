@@ -1,7 +1,8 @@
 from flask import Flask, jsonify, request
-from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user
+from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, get_user_journal_entries
 import re
 import mysql.connector
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -152,7 +153,7 @@ def validate_login_data(data):
 
 # GET -end point to display Home Page
 @app.route("/", methods=["GET"])
-def get_info():
+def get_homepage():
     return jsonify({
         "Info": ("You can use this system by registering a new user to "
                  "add journal entries, get recommendations and to track your mood.")})
@@ -252,6 +253,51 @@ def mood_summary():
             "error": f"Server error: {str(e)}"
         }), 500
 
+
+
+@app.route("/login/search_entries", methods=["GET"])
+def search_entries():
+    try:
+        user_id = request.args.get("user_id")
+        user_date = request.args.get("user_date")
+
+        try:
+            user_id = int(user_id)
+        except (ValueError, TypeError):
+            return jsonify({
+                "error": "User ID must be a valid integer."
+            }), 400
+
+        try:
+            user_date = datetime.strptime(user_date, "%d/%m/%Y")
+        except (ValueError, TypeError):
+            return jsonify({
+                "error": "Date must be in dd/mm/yyyy format."
+            }), 400
+
+        if user_id <= 0:
+            return jsonify({
+                "error": "User ID must be greater than 0."
+            }), 400
+
+        if user_date.date() > datetime.today().date():
+            return jsonify({
+                "error": "User Date entered is a future date."
+            }), 400
+
+        entries = get_user_journal_entries(user_id, user_date)
+
+        if not entries:
+            return jsonify({
+                "error": "No journal entries found for this date."
+            }), 404
+
+        return jsonify({"data": entries}), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": f"Server error: {str(e)}"
+        }), 500
 
 
 # run flask app
