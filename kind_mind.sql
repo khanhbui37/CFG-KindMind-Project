@@ -38,9 +38,6 @@ FOREIGN KEY (User_id)
 REFERENCES Users(User_id) ON DELETE CASCADE,
 Title VARCHAR(100) NOT NULL,
 Content TEXT NOT NULL,
-Mood INT NOT NULL,
-FOREIGN KEY (Mood)
-REFERENCES MoodOptions(Mood_id),
 Energy_level INT NOT NULL,
 FOREIGN KEY (Energy_level)
 REFERENCES EnergyLevel(Energy_id),
