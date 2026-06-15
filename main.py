@@ -4,7 +4,6 @@ import threading
 import time
 from db_utils import create_database, get_logged_in_user_id
 import colorama
-from datetime import datetime
 import requests
 from dotenv import load_dotenv
 import os
