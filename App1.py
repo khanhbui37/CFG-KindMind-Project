@@ -90,13 +90,13 @@ def create_entry():
     
     # Validate moodscore value
     # added moods that the user can input 
-    valid_moods = ['Terrible', 'Bad', 'anxious', 'calm', 'ok','excited','happy']
+    valid_moods = ['Terrible', 'Bad', 'Off', 'Calm', 'Ok','Good','Great', 'Fantastic', 'Mixed', 'Unsure']
     if data['mood'] not in valid_moods:
         return jsonify({"error": f"Invalid mood. Must be one of: {valid_moods}"}), 400
     
     # Validate energy level (1-7)
     # Not sure of measurement.
-    energy_level = [1 = 'drained', 2 = 'sluggish', 3 = 'mellow', 4 = 'steady', 5 = 'vibrant', 6 = 'driven', 7 = 'radiant']
+    energy_level = [1 = 'Drained', 2 = 'Sluggish', 3 = 'Mellow', 4 = 'Steady', 5 = 'Vibrant', 6 = 'Driven', 7 = 'Radiant']
     if not (1 <= data['energy_level'] <= 7):
         return jsonify({"error": "Energy level must be between 1 and 7"}), 400
     
@@ -176,6 +176,7 @@ def list_entries():
     query = JournalEntry.query.filter_by(user_id=user_id)
     
     # Filter by mood
+    # *args
     mood = request.args.get('mood')
     if mood:
         query = query.filter_by(mood=mood)
@@ -210,49 +211,13 @@ def list_entries():
     }), 200
  
 
-# Update journal entries section
- @app.route('/KindMind/entries/<int:entry_id>', methods=['PUT'])
-def update_entry(entry_id):
-    """Update an existing journal entry"""
-    user_id = update_entry()
-    entry = JournalEntry.query.filter_by(id=entry_id, user_id=user_id).first()
-    
-    if not entry:
-        return jsonify({"error": "Entry not found"}), 404
-    
-    data = request.get_json()
-    
-    # Update only provided fields
-    entry.title = data.get('title', entry.title)
-    entry.content = data.get('content', entry.content)
-    
-    if 'mood' in data:
-        valid_moods = ['happy', 'sad', 'anxious', 'calm', 'excited', 'neutral', 'frustrated']
-        if data['mood'] not in valid_moods:
-            return jsonify({"error": f"Invalid mood"}), 400
-        entry.mood = data['mood']
-    
-    if 'energy_level' in data:
-        if not (1 <= data['energy_level'] <= 7):
-            return jsonify({"error": "Energy level must be 1-7"}), 400
-        entry.energy_level = data['energy_level']
-    
-    entry.free_time = data.get('free_time', entry.free_time)
-    
-    db.session.commit()
-    
-    return jsonify({
-        "message": "Entry updated",
-        "entry": entry.to_dict()
-    }), 200
 
 # Delete journal entries section
-@app.route("/KindMind/entries/<int:entry_id>", methods=["DELETE"])
-    # Weather connection section
-    def delete_entry(entry_id):
+@app.route("/KindMind/entries/<id>", methods=["DELETE"])
+def delete_entry(entry_id):
         user_id = get_user_id()
         entry = JournalEntry.query.filter_by(id=entry_id, user_id=user_id).first()
-
+      # if listed entry does not exist 
         if not entry:
             return jsonify({"error": "Entry not found"}), 404
 
@@ -262,7 +227,8 @@ def update_entry(entry_id):
         return jsonify({"message": " JournalEntry deleted"}), 200
 
    
-   
+   except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
    
    # Weather API connection section 
    
@@ -288,16 +254,16 @@ if weather_response.status_code == 200:
     weather_code = data['weather_code']
 
 # weather conditions overview
-
-condition_map = {
+# this is the api code for weather 
+weather_options = {
    0: 'clear', 1: 'mostly_clear', 2: 'partly_cloudy', 3: 'overcast',
-   45: 'foggy', 48: 'foggy', 51: 'light_drizzle', 53: 'moderate_drizzle',
+   45: 'foggy/misty', 48: 'foggy', 51: 'light_drizzle', 53: 'moderate_drizzle',
    55: 'dense_drizzle', 61: 'slight_rain', 63: 'moderate_rain',
    65: 'heavy_rain', 71: 'slight_snow', 73: 'moderate_snow', 75: 'heavy_snow'
 }
 
 return {
-    "condition": condition_map.get(weather_code, 'unknown'),
+    "condition": weather_options.get(weather_code, 'unknown'),
     "temp": data['temp']
 }
 
