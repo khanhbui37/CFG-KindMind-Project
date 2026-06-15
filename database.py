@@ -18,7 +18,7 @@ if __name__ == "__main__":
     run_simulation()
     app.run(debug=True, port=5001)
 
-@app.route('api/ users', methods=['POST'])
+@app.route('api/users', methods=['POST'])
 def register_user():
 
     data = request.get_json(force=True)
@@ -72,7 +72,7 @@ def register_user():
         cursor.close()
         db.close()
 
-@app.route('api/user/<id>', methods=['DELETE'])
+@app.route('api/users/<id>', methods=['DELETE'])
 def delete_user(user_id):
     db = mysql.connector.connect(**db_config)
     cursor = db.cursor()
@@ -216,7 +216,7 @@ def get_journal_entries_by_mood():
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
 
-@app.route('api/user/<id>', methods=['DELETE'])
+@app.route('api/users/<id>', methods=['DELETE'])
 def delete_journal_entry(entry_id):
     db = mysql.connector.connect(**db_config)
     cursor = db.cursor()
