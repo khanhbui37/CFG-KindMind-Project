@@ -257,47 +257,7 @@ def mood_summary():
 
 @app.route("/login/search_entries", methods=["GET"])
 def search_entries():
-    try:
-        user_id = request.args.get("user_id")
-        user_date = request.args.get("user_date")
-
-        try:
-            user_id = int(user_id)
-        except (ValueError, TypeError):
-            return jsonify({
-                "error": "User ID must be a valid integer."
-            }), 400
-
-        try:
-            user_date = datetime.strptime(user_date, "%d/%m/%Y")
-        except (ValueError, TypeError):
-            return jsonify({
-                "error": "Date must be in dd/mm/yyyy format."
-            }), 400
-
-        if user_id <= 0:
-            return jsonify({
-                "error": "User ID must be greater than 0."
-            }), 400
-
-        if user_date.date() > datetime.today().date():
-            return jsonify({
-                "error": "User Date entered is a future date."
-            }), 400
-
-        entries = get_user_journal_entries(user_id, user_date)
-
-        if not entries:
-            return jsonify({
-                "error": "No journal entries found for this date."
-            }), 404
-
-        return jsonify({"data": entries}), 200
-
-    except Exception as e:
-        return jsonify({
-            "error": f"Server error: {str(e)}"
-        }), 500
+    pass
 
 
 # run flask app
