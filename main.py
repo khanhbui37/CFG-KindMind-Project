@@ -323,8 +323,8 @@ def login_menu(logged_in_id):
             break
 
         elif login_input == "8":
-            logout()
-            break
+            print("You have Successfully Logged Out!")
+            exit()
 
         else:
             print("Invalid Input Please Try Again!")
@@ -1167,71 +1167,70 @@ def delete_entry():
 
 def search_entries(logged_in_id):
 
-    while True:
-        user_date = input("\nEnter date to search an entry (dd/mm/yyyy): ").strip()
+    print("=== Search Journal Entries ===")
+
+    mood = input("Mood: ").strip()
+    keyword = input("Keyword: ").strip()
+    print("\nSort entries By:")
+    print("1. Newest first")
+    print("2. Oldest first")
+    sort_choice = input("Your Choice (1/2): ").strip()
+
+
+    if sort_choice == "2":
+        sort = "date_asc"
+    else:
+        sort = "date_desc"
+
+    limit = input("Number of entries to return (default 20): ").strip()
+
+    params = {"user_id" : logged_in_id,
+                 "sort" : sort
+              }
+    if limit:
+        params["limit"] = limit
+
+    if mood:
+        params["mood"] = mood
+
+    if keyword:
+        params["keyword"] = keyword
 
         try:
-            valid_date = datetime.strptime(user_date, "%d/%m/%Y")
+            response = requests.get(
+                f"{BASE_URL}/login/search_entries",
+                params=params
+            )
 
-            # prevent future dates
-            if valid_date.date() > datetime.today().date():
-                print("Date date is a future date. Please try again.")
-                continue
+            data = response.json()
 
-            # Date is valid
-            break
+            if response.status_code != 200:
+                print(data.get("error", "Unknown error"))
+                return
 
-        except ValueError:
-            print("Invalid date. Please enter a valid date in dd/mm/yyyy format.")
+            print(f"\nFound {data['count']} entries:\n")
 
+            if not data["entries"]:
+                 print("No entries found.")
+                 return
 
-    try:
-        response = requests.get(
-            f"{BASE_URL}/login/search_entries",
-            params={
-                "user_id": logged_in_id,
-                "user_date": user_date
-            }
-        )
+            for entry in data["entries"]:
 
-        data = response.json()
-
-        if response.status_code == 200:
-            data = response.json()  # Assuming API returns JSON
-            print("\nEntries found:")
-            print(data)
-        elif response.status_code == 404:
-            print("No entries found for this date.")
-        else:
-            print(f"Error: {response.status_code}")
-            print(response.text)
-
-        entries = data.get("data", [])
-
-        if not entries:
-            print("No entries found.")
-            return
-
-        for entry in entries:
-            print("\n=================================")
-            print(f"JOURNAL ENTRIES FOR {user_date}")
-            print("=================================")
-            print(f"Entry ID: {entry['entry_id']}")
-            print(f"Title: {entry['title']}")
-            print(f"Content: {entry['content']}")
-            print(f"Mood Category: {entry['mood_category_id']}")
-            print(f"Mood Score: {entry['mood_score_id']}")
-            print(f"Energy Level: {entry['energy_level']}")
-            print(f"Free Time: {entry['free_time']}")
-            print(f"Weather: {entry['weather']}")
-            print(f"Recommendations: {entry['recommendations']}")
-            print(f"Created At: {entry['created_at']}")
-
-            print("\n=================================")
+                print(f"Entry ID: {entry['entry_id']}")
+                print(f"Title: {entry['title']}")
+                print(f"Content: {entry['content']}")
+                print(f"Mood Category: {entry['mood_category_id']}")
+                print(f"Mood Score: {entry['mood_score_id']}")
+                print(f"Energy Level: {entry['energy_level']}")
+                print(f"Free Time: {entry['free_time']}")
+                print(f"Weather: {entry['weather']}")
+                print(f"Recommendations: {entry['recommendations']}")
+                print(f"Created At: {entry['created_at']}")
+                print("\n=================================")
 
 
-    except requests.exceptions.RequestException as e:
-        print(f"API request failed: {e}")
+        except requests.exceptions.RequestException as e:
+            print(f"API request failed: {e}")
 
 
 def get_recommendations(category, mood, energy, free_time, weather):
@@ -1301,7 +1300,6 @@ def get_recommendations(category, mood, energy, free_time, weather):
         elif energy in ["Driven", "Radiant"]:
             recommendations.append("Your energy is high. Consider exercise or a productive task.")
 
-
         # MOOD
         if mood == "Terrible":
             recommendations.append("Reach out to a trusted friend or family member.")
@@ -1355,10 +1353,6 @@ def view_mood_summary(logged_in_id):
 
     except requests.exceptions.RequestException as e:
         print(f"API request failed: {e}")
-
-
-def logout():
-    pass
 
 
 # Function to interact with API

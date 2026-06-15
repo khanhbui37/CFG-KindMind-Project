@@ -245,7 +245,8 @@ def get_logged_in_user_id(user_email):
     return logged_info["user_id"] if logged_info else None
 
 def get_user_journal_entries(user_id, user_date):
-    pass
+
+   pass
 
 
 def get_user_mood_summary(user_id):
