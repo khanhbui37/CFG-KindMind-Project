@@ -29,9 +29,13 @@ What will the app do?
 1. Created registration and verification so usernames are not duplicated in the database and new accounts can be created successfully. (04/06/2026)
 2. Started implementing password hashing for secure login preparation. (06/06/2026)
 3. Set up the basic journal API structure for creating and updating journal entries. (11/06/2026)
+4. Deleted duplicate update endpoint, unified weather data (the weather code is based on api mapping)
 
 ## Next steps
 1. Complete the login endpoint and finish secure password hashing and verification.
 2. Build the recommendation section using rule-based suggestions based on mood, energy, time available and weather.
+3. Create analytics based on the user's journal inputs.
+4. connect dbutils 
+5. error handling 
 
 **PLEASE OVERVIEW THIS CODE THROUGHLY AND SUGGEST IMPROVEMENT**
