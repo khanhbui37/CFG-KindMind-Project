@@ -120,7 +120,7 @@ def login_menu(logged_in_id):
         login_input = input(colorama.Fore.LIGHTBLUE_EX + "\nENTER YOUR CHOICE HERE: " + colorama.Style.RESET_ALL)
 
         if login_input == "1":
-            add_journal_entry()
+            add_journal_entry(logged_in_id)
             break
 
         elif login_input == "2":
@@ -564,7 +564,7 @@ def view_journal_entry():
     # Retrieve journal entries from the API/database once backend
     # integration is complete rather than using temporary test data.
 
-def add_journal_entry():
+def add_journal_entry(logged_in_id):
 
     # Display the Add Journal Entry heading.
     print(colorama.Fore.RED + "\nADD JOURNAL ENTRY" + colorama.Style.RESET_ALL)
@@ -837,24 +837,38 @@ def add_journal_entry():
         colorama.Style.RESET_ALL
     )
 
-    print(
-        colorama.Fore.GREEN +
-        "\nJournal entry created successfully." +
-        colorama.Style.RESET_ALL
-    )
+    journal_data = {
+        "user_id": logged_in_id,
+        "title": title,
+        "content": content,
+        "mood_category": int(mood_category_choice),
+        "mood_score": int(mood_score_choice),
+        "energy_level": int(energy_choice),
+        "free_time": free_time,
+        "weather": weather_result,
+        "recommendations": recommendation_result
+    }
 
-    # TODO:
-    # Send the collected data to the API/database once integration is complete.
-    #
-    # Data to be stored:
-    # - title
-    # - content
-    # - mood_category_id
-    # - mood_score_id
-    # - energy_level_id
-    # - free_time
-    # - weather_result
-    # - recommendation_result
+    try:
+        response = requests.post(
+            f"{BASE_URL}/login/journal_entries",
+            json=journal_data
+        )
+
+        if response.status_code != 201:
+            print(colorama.Fore.RED +
+                f"\nError: {response.text}" +
+                colorama.Style.RESET_ALL)
+
+
+    except requests.exceptions.RequestException as e:
+        print(colorama.Fore.RED +
+            f"\nConnection error: {e}" +
+            colorama.Style.RESET_ALL)
+
+
+
+
 
 def edit_journal_entry():
 

@@ -39,9 +39,6 @@ def create_database():
             "energy_level": """ CREATE TABLE IF NOT EXISTS energy_level (
                                              energy_id INT PRIMARY KEY AUTO_INCREMENT,
                                              energy_name VARCHAR(100) UNIQUE NOT NULL)""",
-            "weather_options": """ CREATE TABLE IF NOT EXISTS weather_options (
-                                             weather_id INT PRIMARY KEY AUTO_INCREMENT,
-                                             weather_name VARCHAR (100) UNIQUE NOT NULL)""",
             "journal_entries": """ CREATE TABLE IF NOT EXISTS journal_entries (
                                              entry_id INT PRIMARY KEY AUTO_INCREMENT,
                                              user_id INT NOT NULL, 
@@ -55,11 +52,11 @@ def create_database():
                                              mood_score_id INT NOT NULL,
                                              FOREIGN KEY (mood_score_id)
                                              REFERENCES mood_score(score_id),
-                                             energy_level INT NOT NULL,
-                                             FOREIGN KEY (energy_level)
+                                             energy_level_id INT NOT NULL,
+                                             FOREIGN KEY (energy_level_id)
                                              REFERENCES energy_level(energy_id),
                                              free_time BOOLEAN NOT NULL,
-                                             weather INT NOT NULL,
+                                             weather VARCHAR(50) NOT NULL,
                                              recommendations TEXT,
                                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)"""
 
@@ -140,31 +137,6 @@ def insert_default_values(cursor):
         ]
     )
 
-    # Weather Options
-    cursor.executemany(
-        """
-        INSERT IGNORE INTO weather_options (weather_name)
-        VALUES (%s)
-        """,
-        [
-            ('Sunny',),
-            ('Mostly Sunny',),
-            ('Hot & Scorching',),
-            ('Partly Cloudy',),
-            ('Mostly Cloudy',),
-            ('Overcast',),
-            ('Light Drizzle',),
-            ('Showers',),
-            ('Heavy Rain',),
-            ('Light Snow',),
-            ('Heavy Snow',),
-            ('Freezing Rain',),
-            ('Thunderstorm',),
-            ('Windy',),
-            ('Foggy / Misty',)
-        ]
-    )
-
 
 def create_user(data):
 
@@ -216,6 +188,63 @@ def create_user(data):
         if db:
             db.close()
 
+def create_journal_entry(data):
+
+    db = None
+    cursor = None
+
+    try:
+        db = get_connection()  # connect to database
+        cursor = db.cursor()
+
+        query = """
+            INSERT INTO journal_entries
+            (user_id, title, content, mood_category_id, mood_score_id, energy_level_id,
+            free_time, weather, recommendations)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+
+        values = (
+            data["user_id"],
+            data["title"],
+            data["content"],
+            data["mood_category"],
+            data["mood_score"],
+            data["energy_level"],
+            data["free_time"],
+            data["weather"],
+            data["recommendations"]
+        )
+
+        cursor.execute("""USE kindMind""")
+        cursor.execute(query, values)
+
+        db.commit()
+
+        return {"message":"Journal Entry Successfully Added"}
+
+    except mysql.connector.IntegrityError as err:
+        return {"error": f"Integrity error: {err}"}
+
+    except mysql.connector.DataError as err:
+        return {"error": f"Invalid data: {err}"}
+
+    except mysql.connector.ProgrammingError as err:
+        return {"error": f"SQL error: {err}"}
+
+    except mysql.connector.OperationalError as err:
+        return {"error": f"Connection issue: {err}"}
+
+    except mysql.connector.Error as err:
+        return {"error": f"Database error: {err}"}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+
 def get_logged_in_user_id(user_email):
     db = None
     cursor = None
@@ -244,9 +273,6 @@ def get_logged_in_user_id(user_email):
 
     return logged_info["user_id"] if logged_info else None
 
-def get_user_journal_entries(user_id, user_date):
-
-   pass
 
 
 def get_user_mood_summary(user_id):
