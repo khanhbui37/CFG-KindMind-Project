@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry
+from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry, get_searched_entries
 import re
 import mysql.connector
 
@@ -275,12 +275,12 @@ def login():
 
 @app.route("/login/mood_summary", methods=["GET"])
 def mood_summary():
-
     try:
         user_id = request.args.get("user_id")
 
         try:
             user_id = int(user_id)
+
         except (ValueError, TypeError):
             return jsonify({
                 "error": "User ID must be a valid integer."
@@ -321,7 +321,47 @@ def mood_summary():
 
 @app.route("/login/search_entries", methods=["GET"])
 def search_entries():
-    pass
+
+    try:
+        user_id = request.args.get("user_id")
+        mood = request.args.get("mood")
+        keyword = request.args.get("keyword")
+        sort = request.args.get("sort", "date_desc")
+        limit = request.args.get("limit", 20, type=int)
+
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+        try:
+            user_id = int(user_id)
+
+        except (ValueError, TypeError):
+            return jsonify({
+            "error": "User ID must be a valid integer."
+            }), 400
+
+        if user_id <= 0:
+            return jsonify({
+            "error": "User ID must be greater than 0."
+            }), 400
+
+        found_rows = get_searched_entries(user_id, mood, keyword, sort, limit)
+
+        if found_rows is None:
+            return jsonify({
+                "error": "No Entries Found."
+            }), 404
+
+        response = {
+            "entries": found_rows
+        }
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": f"Server error: {str(e)}"
+        }), 500
+
 
 @app.route('/login/journal_entries', methods=['GET'])
 def view_journal_entry():
