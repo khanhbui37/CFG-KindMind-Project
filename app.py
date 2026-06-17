@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request
 from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry, get_searched_entries
+from werkzeug.security import hashed_password 
+import hashlib
 import re
 import mysql.connector
 
@@ -149,6 +151,11 @@ def validate_login_data(data):
 
     return errors if errors else None
 
+# Helper Function to validate hashing 
+#protecting users content and personal info 
+def hash_entry(user_id, title, content):
+    data = f"{user_id}:{title}:{content}"
+    return hashlib.sha256(data.encode()).hexdigest()
 
 # Helper Function to validate add journal entry details
 def validate_add_journal_entry(data):
@@ -216,13 +223,15 @@ def validate_add_journal_entry(data):
 
 
 # GET -end point to display Home Page
-@app.route("/", methods=["GET"])
+@app.route("/homepage", methods=["GET"])
 def get_homepage():
-    return jsonify({
+
+    return "Welcome to KindMind !"
+    jsonify({
         "Info": ("You can use this system by registering a new user to "
                  "add journal entries, get recommendations and to track your mood.")})
 
-@app.route("/register", methods=["POST"])
+@app.route("verify/register", methods=["POST"])
 def register():
     try:
 
@@ -236,7 +245,10 @@ def register():
         # Validates all the fields required on creation
         errors = validate_user_fields(data)
 
+        
+
         if errors is None:
+            data['password'] = user.hash_password(data['password']) # starts hashing inputted password 
             add_user = create_user(data)  # Add new user to users table in db_utils file
 
             if "error" in add_user:
@@ -251,7 +263,7 @@ def register():
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 
-@app.route("/login", methods=["POST"])
+@app.route("/login/verify/", methods=["POST"])
 def login():
     try:
         if not request.is_json:
@@ -260,12 +272,27 @@ def login():
                     "message": "Request must be JSON",
                     "error": "INVALID_CONTENT_TYPE"
                 }), 400
+        
+        # checks if customer data lines up with the database 
+        if not data or not data.get('username') or not data.get('password'):
+        return jsonify({"error": "Missing username or password"}), 400
+    
+    user = User.query.filter_by(username=data['username']).first()
+    
+    if not user or not user.check_password(data['password']):
+        return jsonify({"error": "Invalid credentials"}), 401
+    
 
         data = request.get_json()
         errors = validate_login_data(data)  # validate data in a helper function
-
+        access = create_access(identity=user.id) # access to be granted 
+            
         if errors is None:
-            return jsonify({"message":"YOU HAVE SUCCESSFULLY LOGGED IN"}), 200
+
+            return jsonify({"message":"YOU HAVE SUCCESSFULLY LOGGED IN",
+                            " access": hashed_entry, # add hashed function
+                            "user_id" : user_id
+            }), 200
 
         else:
             return jsonify({"errors": errors}), 400
@@ -370,7 +397,8 @@ def view_journal_entry():
 @app.route('/login/journal_entries', methods=['POST'])
 def add_journal_entry():
     """Create a new journal entry"""
-
+# shows user if data has been modified 
+entry.integrity_hash = hash_entry(user_id,entry.title,entry.content)
     try:
         if not request.is_json:
             return jsonify({
