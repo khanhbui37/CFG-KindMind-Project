@@ -133,6 +133,7 @@ def login_menu(logged_in_id):
 
         elif login_input == "4":
             search_entries(logged_in_id)
+            break
 
         elif login_input == "5":
 
@@ -1209,41 +1210,39 @@ def search_entries(logged_in_id):
     if keyword:
         params["keyword"] = keyword
 
-        try:
-            response = requests.get(
-                f"{BASE_URL}/login/search_entries",
-                params=params
-            )
+    try:
+        response = requests.get(
+            f"{BASE_URL}/login/search_entries",
+            params=params
+        )
 
-            data = response.json()
+        data = response.json()
 
-            if response.status_code != 200:
-                print(data.get("error", "Unknown error"))
-                return
+        if response.status_code != 200:
+            print(data.get("error", "Unknown error"))
+            return
 
-            print(f"\nFound {data['count']} entries:\n")
+        if not data["entries"]:
+            print("No entries found.")
+            return
 
-            if not data["entries"]:
-                 print("No entries found.")
-                 return
+        for entry in data["entries"]:
 
-            for entry in data["entries"]:
-
-                print(f"Entry ID: {entry['entry_id']}")
-                print(f"Title: {entry['title']}")
-                print(f"Content: {entry['content']}")
-                print(f"Mood Category: {entry['mood_category_id']}")
-                print(f"Mood Score: {entry['mood_score_id']}")
-                print(f"Energy Level: {entry['energy_level']}")
-                print(f"Free Time: {entry['free_time']}")
-                print(f"Weather: {entry['weather']}")
-                print(f"Recommendations: {entry['recommendations']}")
-                print(f"Created At: {entry['created_at']}")
-                print("\n=================================")
+            print(f"Entry ID: {entry['entry_id']}")
+            print(f"Title: {entry['title']}")
+            print(f"Content: {entry['content']}")
+            print(f"Mood Category: {entry['mood_category_id']}")
+            print(f"Mood Score: {entry['mood_score_id']}")
+            print(f"Energy Level: {entry['energy_level_id']}")
+            print(f"Free Time: {entry['free_time']}")
+            print(f"Weather: {entry['weather']}")
+            print(f"Recommendations: {entry['recommendations']}")
+            print(f"Created At: {entry['created_at']}")
+            print("\n=================================")
 
 
-        except requests.exceptions.RequestException as e:
-            print(f"API request failed: {e}")
+    except requests.exceptions.RequestException as e:
+        print(f"API request failed: {e}")
 
 
 def get_recommendations(category, mood, energy, free_time, weather):

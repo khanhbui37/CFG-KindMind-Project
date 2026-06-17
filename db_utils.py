@@ -275,6 +275,64 @@ def get_logged_in_user_id(user_email):
 
 
 
+def get_searched_entries(user_id, mood, keyword, sort, limit):
+    db = None
+    cursor = None
+    entries = None
+
+    try:
+        db = get_connection()
+        cursor = db.cursor(dictionary=True)
+
+        query = """
+                SELECT *
+                FROM journal_entries
+                WHERE user_id = %s
+            """
+
+        params = [user_id]
+
+        if mood:
+            query += " AND mood_category_id = %s"
+            params.append(mood)
+
+        if keyword:
+            query += """
+                    AND (
+                        title LIKE %s
+                        OR content LIKE %s
+                    )
+                """
+            search_term = f"%{keyword}%"
+            params.extend([search_term, search_term])
+
+
+        if sort == "date_asc":
+            query += " ORDER BY created_at ASC"
+        else:
+            query += " ORDER BY created_at DESC"
+
+        query += " LIMIT %s"
+        params.append(limit)
+
+        cursor.execute("USE kindMind")
+        cursor.execute(query, params)
+        entries = cursor.fetchall()
+
+
+    except mysql.connector.Error as error:
+        print(f"Something went wrong: {error}")
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+    return entries if entries else None
+
+
+
 def get_user_mood_summary(user_id):
     db = None
     cursor = None
@@ -311,7 +369,7 @@ def get_user_mood_summary(user_id):
         FROM journal_entries je
             JOIN mood_category mc ON je.mood_category_id = mc.category_id
             JOIN mood_score ms ON je.mood_score_id = ms.score_id
-            JOIN energy_level el ON je.energy_level = el.energy_id
+            JOIN energy_level el ON je.energy_level_id = el.energy_id
     
         WHERE user_id = %s
         GROUP BY user_id
