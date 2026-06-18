@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry, get_searched_entries
+from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry, get_searched_entries, get_user_journal_entries
 import re
 import mysql.connector
 
@@ -362,10 +362,19 @@ def search_entries():
             "error": f"Server error: {str(e)}"
         }), 500
 
-
 @app.route('/login/journal_entries', methods=['GET'])
 def view_journal_entry():
-    pass
+
+    user_id = request.args.get("user_id")
+
+    entries = get_user_journal_entries(user_id)
+
+    return jsonify({
+        "user_id": user_id,
+        "total_entries": len(entries),
+        "entries": entries
+    })
+
 
 @app.route('/login/journal_entries', methods=['POST'])
 def add_journal_entry():
@@ -374,17 +383,16 @@ def add_journal_entry():
     try:
         if not request.is_json:
             return jsonify({
-                    "status": "error",
-                    "message": "Request must be JSON",
-                    "error": "INVALID_CONTENT_TYPE"
-                }), 400
+                "status": "error",
+                "message": "Request must be JSON",
+                "error": "INVALID_CONTENT_TYPE"
+            }), 400
 
         data = request.get_json()
         errors = validate_add_journal_entry(data)
-        print(errors)# validate data in a helper function
 
         if errors is None:
-            add_row = create_journal_entry(data)   # Add journal entry to table in db_utils file
+            add_row = create_journal_entry(data)
             return jsonify(add_row), 201
         else:
             return jsonify({"errors": errors}), 400

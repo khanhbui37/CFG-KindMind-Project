@@ -244,6 +244,36 @@ def create_journal_entry(data):
         if db:
             db.close()
 
+def get_user_journal_entries(user_id):
+    db = None
+    cursor = None
+    entries = None
+
+    try:
+        db = get_connection()
+        cursor = db.cursor(dictionary=True)
+
+        query = """
+        SELECT *
+        FROM journal_entries
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+        """
+
+        cursor.execute("USE kindMind")
+        cursor.execute(query, (user_id,))
+        entries = cursor.fetchall()
+
+    except mysql.connector.Error as error:
+        print(f"Something went wrong: {error}")
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+    return entries if entries else None
 
 def get_logged_in_user_id(user_email):
     db = None
