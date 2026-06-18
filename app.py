@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request
 from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry, get_searched_entries
-from werkzeug.security import hashed_password 
 import hashlib
 import re
 import mysql.connector
