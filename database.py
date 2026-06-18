@@ -1,5 +1,7 @@
 from datetime import date
 import mysql.connector
+import requests
+
 
 from db_config import db_config
 from flask import Flask, jsonify, request
@@ -7,6 +9,7 @@ from flask import Flask, jsonify, request
 from db_utilis import insert_default_values, get_user_mood_summary, get_common_mood_category
 
 app = Flask(__name__)
+
 
 def run_simulation():
     print("   WELCOME TO KINDMIND    ")
@@ -89,13 +92,37 @@ def delete_user(user_id):
     finally:
         cursor.close()
         db.close()
+API_KEY = "os.getenv('WEATHER_API_KEY')"
+API_URL = "https://api.openweathermap.org/data/2.5/weather"
+
 
 @app.route('api/users/<id>', methods=['PUT'])
 def create_journal(entry_id):
-
     data = request.get_json(force=True)
     if not data:
         return jsonify({"error": "Request body is missing or not valid JSON."}), 400
+
+    city = data.get("City")
+    temperature = None
+    weather_conditions = None
+
+    if city:
+        try:
+            params = {
+                'q': city,
+                'appid': API_KEY,
+                'units': 'metric',
+                'lang': 'pl'
+            }
+            response = requests.get(API_URL, params=params, timeout=5)
+
+            if response.status_code == 200:
+                weather_data = response.json()
+                weather_conditions = weather_data['weather'][0]['description']
+            else:
+                return jsonify({"error": f"Error with data for: {city}. Please check city name."}), 400
+        except Exception as e:
+            return jsonify({"error": f"Error with connection with API: {str(e)}"}), 500
 
     db = mysql.connector.connect(**db_config)
     cursor = db.cursor(dictionary=True)
@@ -112,30 +139,39 @@ def create_journal(entry_id):
             mood = data.get("Mood", entry["mood"])
             energy_level = data.get("Energy Level", entry["energy_level"])
             free_time = data.get("Free Time", entry["free_time"])
+            city = city if city else entry.get("city")
+            temperature = temperature if temperature is not None else entry.get("temperature")
+            weather_conditions = weather_conditions if weather_conditions else entry.get("weather_conditions")
 
             query = """
-                UPDATE journal_entries 
-                SET title = %s, content = %s, mood = %s, energy_level = %s, free_time = %s 
-                WHERE id = %s
-            """
-            cursor.execute(query, (title, content, mood, energy_level, free_time, entry_id))
+                            UPDATE journal_entries 
+                            SET title = %s, content = %s, mood = %s, energy_level = %s, free_time = %s,
+                                city = %s, temperature = %s, weather_conditions = %s
+                            WHERE id = %s
+                        """
+            cursor.execute(query, (title, content, mood, energy_level, free_time, city, temperature, weather_conditions,
+                                   entry_id))
             db.commit()
             msg = "Journal entry updated successfully."
         else:
-            title = data.get("Title")
-            content = data.get("Content")
-            mood = data.get("Mood", "Neutral")
-            energy_level = data.get("Energy Level", "Medium")
-            free_time = data.get("Free Time", "")
+            title = data.get("Title", entry["title"])
+            content = data.get("Content", entry["content"])
+            mood = data.get("Mood", entry["mood"])
+            energy_level = data.get("Energy Level", entry["energy_level"])
+            free_time = data.get("Free Time", entry["free_time"])
+            city = city if city else entry.get("city")
+            temperature = temperature if temperature is not None else entry.get("temperature")
+            weather_conditions = weather_conditions if weather_conditions else entry.get("weather_conditions")
 
             if not title or not content:
                 return jsonify({"error": "Title and Content are required fields for creating a journal entry."}), 400
 
             query = """
-                INSERT INTO journal_entries (id, title, content, mood, energy_level, free_time, created_at) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """
-            cursor.execute(query, (entry_id, title, content, mood, energy_level, free_time, today_date))
+                    INSERT INTO journal_entries (id, title, created_at, content, mood, energy_level, free_time,  city, temperature, weather_conditions) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+            cursor.execute(query,
+                           (entry_id, title, content, mood, energy_level, free_time, today_date, city, temperature, weather_conditions))
             db.commit()
             msg = "Journal entry created successfully."
 
@@ -143,12 +179,15 @@ def create_journal(entry_id):
             "message": msg,
             "entry": {
                 "id": entry_id,
+                "Created At": str(today_date),
                 "Title": title,
                 "Content": content,
                 "Mood": mood,
                 "Energy Level": energy_level,
                 "Free Time": free_time,
-                "Created At": str(today_date)
+                "City": city,
+                "Temperature": temperature,
+                "Weather": weather_conditions
             }
         }), 200
 
