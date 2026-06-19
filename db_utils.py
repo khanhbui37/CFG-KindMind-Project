@@ -244,15 +244,23 @@ def create_journal_entry(data):
         if db:
             db.close()
 
+# Retrieve all journal entries for a specific user
 def get_user_journal_entries(user_id):
+
+    # Create variables for the database connection, cursor and query results
     db = None
     cursor = None
     entries = None
 
     try:
+        # Connect to the MySQL database
         db = get_connection()
+
+        # Create a cursor that returns results as dictionaries
         cursor = db.cursor(dictionary=True)
 
+        # SQL query to retrieve all journal entries for the selected user
+        # Entries are ordered by creation date with the newest entries first
         query = """
         SELECT *
         FROM journal_entries
@@ -260,20 +268,86 @@ def get_user_journal_entries(user_id):
         ORDER BY created_at DESC
         """
 
+        # Select the KindMind database
         cursor.execute("USE kindMind")
+
+        # Execute the query using the supplied user ID
         cursor.execute(query, (user_id,))
+
+        # Retrieve all matching journal entries
         entries = cursor.fetchall()
 
+
     except mysql.connector.Error as error:
-        print(f"Something went wrong: {error}")
+        # Handle any database-related errors
+        return {"error": f"Database error: {error}"}
 
     finally:
+        # Close the cursor if it exists
         if cursor:
             cursor.close()
+
+        # Close the database connection
         if db:
             db.close()
 
+    # Return the journal entries if any are found,
+    # otherwise return None
     return entries if entries else None
+
+# Update an existing journal entry in the database using the entry ID
+def update_journal_entry(entry_id, data):
+    # Create variables for the database connection and cursor
+    db = None
+    cursor = None
+
+    try:
+        # Connect to the MySQL database
+        db = get_connection()
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # Currently allows updating the journal title and content.
+        # Additional fields can be added in future iterations if required.
+        query = """
+        UPDATE journal_entries
+        SET title = %s,
+            content = %s
+        WHERE entry_id = %s
+        """
+
+        # Values that will replace the placeholders (%s)
+        values = (
+            data["title"],
+            data["content"],
+            entry_id
+        )
+
+        # Select the KindMind database
+        cursor.execute("USE kindMind")
+
+        # Execute the update query
+        cursor.execute(query, values)
+
+        # Save changes to the database
+        db.commit()
+
+        # Return success message
+        return {"message": "Journal Entry Successfully Updated"}
+
+    except mysql.connector.Error as error:
+        # Handle any database-related errors
+        return {"error": f"Database error: {error}"}
+
+    finally:
+        # Close the cursor if it was created
+        if cursor:
+            cursor.close()
+
+        # Close the database connection
+        if db:
+            db.close()
 
 def get_logged_in_user_id(user_email):
     db = None

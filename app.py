@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry, get_searched_entries, get_user_journal_entries
+from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry, get_searched_entries, get_user_journal_entries, update_journal_entry
 import re
 import mysql.connector
 
@@ -362,19 +362,52 @@ def search_entries():
             "error": f"Server error: {str(e)}"
         }), 500
 
+# API endpoint to retrieve all journal entries for a specific user
+# Returns the user's journal entries along with a total count
 @app.route('/login/journal_entries', methods=['GET'])
 def view_journal_entry():
 
+    # Get the user ID from the URL query parameters
+    # Example: /login/journal_entries?user_id=1
     user_id = request.args.get("user_id")
 
+    # Retrieve all journal entries for the specified user
     entries = get_user_journal_entries(user_id)
 
+    # Return the journal entries as a JSON response
     return jsonify({
         "user_id": user_id,
         "total_entries": len(entries),
         "entries": entries
     })
 
+# API endpoint to update an existing journal entry
+# Uses the entry_id from the URL to identify which entry to edit
+@app.route('/login/journal_entries/<int:entry_id>', methods=['PUT'])
+def edit_journal_entry(entry_id):
+    """Update an existing journal entry"""
+
+    try:
+        # Ensure the request body is JSON
+        if not request.is_json:
+            return jsonify({
+                "status": "error",
+                "message": "Request must be JSON",
+                "error": "INVALID_CONTENT_TYPE"
+            }), 400
+
+        # Retrieve the updated journal entry data from the request
+        data = request.get_json()
+
+        # Call the database function to update the journal entry
+        updated_entry = update_journal_entry(entry_id, data)
+
+        # Return a success response
+        return jsonify(updated_entry), 200
+
+    except Exception as e:
+        # Handle unexpected server errors
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/login/journal_entries', methods=['POST'])
 def add_journal_entry():
