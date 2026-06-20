@@ -349,6 +349,55 @@ def update_journal_entry(entry_id, data):
         if db:
             db.close()
 
+# Delete an existing journal entry from the database using its entry ID
+def delete_journal_entry(entry_id):
+
+    # Set database and cursor to None initially
+    db = None
+    cursor = None
+
+    try:
+        # Create a connection to the MySQL database
+        db = get_connection()
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # SQL query to remove a journal entry matching the given entry ID
+        query = """
+        DELETE FROM journal_entries
+        WHERE entry_id = %s
+        """
+
+        # Store the entry ID in a tuple to safely pass into the query
+        # The comma is required because this is a single-value tuple
+        values = (entry_id,)
+
+        # Select the KindMind database
+        cursor.execute("USE kindMind")
+
+        # Execute the DELETE query with the supplied entry ID
+        cursor.execute(query, values)
+
+        # Save the changes permanently to the database
+        db.commit()
+
+        # Return a success message if the deletion was successful
+        return {"message": "Journal Entry Successfully Deleted"}
+
+    except mysql.connector.Error as error:
+        # Return an error message if a database error occurs
+        return {"error": f"Database error: {error}"}
+
+    finally:
+        # Close the cursor if it was opened
+        if cursor:
+            cursor.close()
+
+        # Close the database connection if it was opened
+        if db:
+            db.close()
+
 def get_logged_in_user_id(user_email):
     db = None
     cursor = None

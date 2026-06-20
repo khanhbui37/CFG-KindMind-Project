@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry, get_searched_entries, get_user_journal_entries, update_journal_entry
+from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry, get_searched_entries, get_user_journal_entries, update_journal_entry, delete_journal_entry
 import re
 import mysql.connector
 
@@ -407,6 +407,21 @@ def edit_journal_entry(entry_id):
 
     except Exception as e:
         # Handle unexpected server errors
+        return jsonify({"error": str(e)}), 500
+
+# Delete a journal entry using its unique entry ID
+@app.route('/login/journal_entries/<int:entry_id>', methods=['DELETE'])
+def delete_journal(entry_id):
+
+    try:
+        # Call the database function that removes the journal entry
+        result = delete_journal_entry(entry_id)
+
+        # Return a success response to the user
+        return jsonify(result), 200
+
+    except Exception as e:
+        # Return an error message if something unexpected happens
         return jsonify({"error": str(e)}), 500
 
 @app.route('/login/journal_entries', methods=['POST'])
