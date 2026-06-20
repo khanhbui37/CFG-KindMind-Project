@@ -414,10 +414,21 @@ def edit_journal_entry(entry_id):
 def delete_journal(entry_id):
 
     try:
-        # Call the database function that removes the journal entry
+        # Validate that the entry ID is greater than 0
+        if entry_id <= 0:
+            return jsonify({
+                "error": "Entry ID must be greater than 0"
+            }), 400
+
+        # Call the database function in db_utils.py
         result = delete_journal_entry(entry_id)
 
-        # Return a success response to the user
+        # If the journal entry does not exist,
+        # return a 404 (Not Found) response
+        if "error" in result:
+            return jsonify(result), 404
+
+        # Return a success message if the entry was deleted
         return jsonify(result), 200
 
     except Exception as e:

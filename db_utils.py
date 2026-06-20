@@ -375,15 +375,17 @@ def delete_journal_entry(entry_id):
 
         # Select the KindMind database
         cursor.execute("USE kindMind")
-
-        # Execute the DELETE query with the supplied entry ID
         cursor.execute(query, values)
 
-        # Save the changes permanently to the database
         db.commit()
+
+        # Check if any row was actually deleted
+        if cursor.rowcount == 0:
+            return {"error": "Journal entry not found"}
 
         # Return a success message if the deletion was successful
         return {"message": "Journal Entry Successfully Deleted"}
+
 
     except mysql.connector.Error as error:
         # Return an error message if a database error occurs
