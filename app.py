@@ -52,7 +52,7 @@ def validate_user_fields (data):
         db = get_connection()  # connect to database
         cursor = db.cursor()
 
-        cursor.execute("""USE kindMind""")
+        cursor.execute("""USE KindMind""")
         cursor.execute("SELECT * FROM users WHERE email= %s", (user_email,))
         result = cursor.fetchone()
 
@@ -114,7 +114,7 @@ def validate_login_data(data):
         db = get_connection()  # connect to database
         cursor = db.cursor()
 
-        cursor.execute("""USE kindMind""")
+        cursor.execute("""USE KindMind""")
 
         query = """
         SELECT * 
