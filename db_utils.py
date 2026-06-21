@@ -1,5 +1,5 @@
 import mysql.connector
-from config import db_config
+from config_example import db_config
 
 # Helper function to connect to database
 def get_connection():
@@ -424,3 +424,7 @@ def get_common_mood_category(user_id):
             db.close()
 
     return common_category["category_name"] if common_category else None
+
+# Backwards-compatible alias for existing tests branch naming (test_kindmind.py)
+def create_data_base():
+    return create_database()

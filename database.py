@@ -35,10 +35,10 @@ import mysql.connector
 import requests
 
 
-from db_config import db_config
+from config_example import db_config
 from flask import Flask, jsonify, request
 
-from db_utilis import insert_default_values, get_user_mood_summary, get_common_mood_category
+from db_utils import insert_default_values, get_user_mood_summary, get_common_mood_category
 
 app = Flask(__name__)
 
