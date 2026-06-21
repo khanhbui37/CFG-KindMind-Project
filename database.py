@@ -1,3 +1,35 @@
+"""
+Experimental/reference file.
+
+This file contains draft API/database ideas that may be merged or refactored later.
+It is not currently aligned with the active KindMind app flow in main.py, app.py, db_utils.py,
+or the cleaned kind_mind.sql schema.
+
+Current active database schema:
+- users
+- mood_category
+- mood_score
+- energy_level
+- journal_entries
+
+Current journal_entries columns:
+- entry_id
+- user_id
+- title
+- content
+- mood_category_id
+- mood_score_id
+- energy_level_id
+- free_time
+- weather
+- recommendations
+- created_at
+
+This file may still contain older draft fields such as id, city, temperature,
+weather_conditions, mood, and energy_level. These should be refactored before
+being integrated into the active application.
+"""
+
 from datetime import date
 import mysql.connector
 import requests
