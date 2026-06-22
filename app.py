@@ -1,5 +1,14 @@
 from flask import Flask, jsonify, request
-from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry, get_searched_entries
+from db_utils import (
+    get_connection,
+    get_user_mood_summary,
+    get_common_mood_category,
+    create_user,
+    create_journal_entry,
+    get_searched_entries,
+    get_logged_in_user_id
+)
+from werkzeug.security import generate_password_hash, check_password_hash
 import hashlib
 import re
 import mysql.connector
