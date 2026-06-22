@@ -16,33 +16,43 @@ import mysql.connector
 app = Flask(__name__)
 
 
-# Hashing 
+# Hash password before saving it to the database
 def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest() # using SHA256
+    return generate_password_hash(password)
 
-# Helper Function to validate hashing 
-#protecting users content and personal info 
+# Check typed password against the stored password hash
+def verify_password(stored_hash, password): 
+    return check_password_hash(stored_hash, password)
+
+# Optional future improvement:
+# This creates a data integrity hash for a journal entry.
+# It does not encrypt or hide the journal title/content.
 def hash_entry(user_id, title, content):
     data = f"{user_id}:{title}:{content}"
     return hashlib.sha256(data.encode()).hexdigest()
 
-#Helper function to validate user info.
+# Helper function to validate user info.
 def validate_user_fields (data):
 
     errors=[]
 
-    user_name = data.get('name')
-    user_email = data.get('email')
-    user_password = data.get('password')
+    # Get user registration fields from the request body.
+    # Default to an empty string so validation does not crash if a field is missing.
+    user_name = data.get("name", "")
+    user_email = data.get("email", "")
+    user_password = data.get("password", "")
 
-   # Name validation
-    if not user_name.strip():
+    # Name validation
+    # Check that the name is a string and is not empty/only spaces.
+    if not isinstance(user_name, str) or not user_name.strip():
         errors.append("Name cannot be empty.")
 
-    if len(user_name.strip()) < 2:
+    # Check that the name has at least 2 characters after removing extra spaces.
+    elif len(user_name.strip()) < 2:
         errors.append("Name must be at least 2 characters.")
 
-    if not re.match(r"^[A-Za-z ]+$", user_name):
+    # Check that the name only contains letters and spaces.
+    elif not re.match(r"^[A-Za-z ]+$", user_name):
         errors.append("Name can only contain letters and spaces.")
     
     # Email validation
