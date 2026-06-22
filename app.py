@@ -6,6 +6,17 @@ import mysql.connector
 
 app = Flask(__name__)
 
+
+# Hashing 
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest() # using SHA256
+
+# Helper Function to validate hashing 
+#protecting users content and personal info 
+def hash_entry(user_id, title, content):
+    data = f"{user_id}:{title}:{content}"
+    return hashlib.sha256(data.encode()).hexdigest()
+
 #Helper function to validate user info.
 def validate_user_fields (data):
 
@@ -15,7 +26,7 @@ def validate_user_fields (data):
     user_email = data.get('email')
     user_password = data.get('password')
 
-
+   # Name validation
     if not user_name.strip():
         errors.append("Name cannot be empty.")
 
@@ -24,12 +35,14 @@ def validate_user_fields (data):
 
     if not re.match(r"^[A-Za-z ]+$", user_name):
         errors.append("Name can only contain letters and spaces.")
-
+    
+    # Email validation
     pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
     if not re.match(pattern, user_email):
         errors.append("Invalid email format.")
-
+    
+    # Password validation
     if len(user_password) < 7:
         errors.append("Password must be at least 7 characters.")
 
@@ -45,7 +58,7 @@ def validate_user_fields (data):
     if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
         errors.append("Password must contain a special character.")
 
-
+   # Checks if email exists already
     db = None
     cursor = None
 
@@ -87,11 +100,17 @@ def validate_login_data(data):
     user_password = data.get('password')
     user_email = data.get('email')
 
+    if not user_email or not user_password:
+        errors.append("Email and password are required.")
+        return errors
+
+# Email
     pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
     if not re.match(pattern, user_email):
         errors.append("Invalid email format.")
 
+# password
     if len(user_password) < 7:
         errors.append("Password must be at least 7 characters.")
 
@@ -108,6 +127,7 @@ def validate_login_data(data):
         errors.append("Password must contain a special character.")
 
 
+# verifies data in DB
     db = None
     cursor = None
 
@@ -125,6 +145,8 @@ def validate_login_data(data):
 
         cursor.execute(query, (user_email, user_password))
         result = cursor.fetchone()
+
+        hashed_input = hash_password(user_password)
 
         if not result:
             errors.append("Email and Password doesn't match")
@@ -150,11 +172,7 @@ def validate_login_data(data):
 
     return errors if errors else None
 
-# Helper Function to validate hashing 
-#protecting users content and personal info 
-def hash_entry(user_id, title, content):
-    data = f"{user_id}:{title}:{content}"
-    return hashlib.sha256(data.encode()).hexdigest()
+
 
 # Helper Function to validate add journal entry details
 def validate_add_journal_entry(data):
@@ -246,8 +264,13 @@ def register():
 
         
 
-        if errors is None:
-            data['password'] = user.hash_password(data['password']) # starts hashing inputted password 
+        if errors :
+            if ininstance(errors, dict): # DB error
+              return jsonify(errors), 500
+            return jsonify({"error": "Invalid data", "problems": errors
+            }), 400
+
+            data['password'] = hash_password(data['password']) # starts hashing inputted password 
             add_user = create_user(data)  # Add new user to users table in db_utils file
 
             if "error" in add_user:
@@ -255,8 +278,6 @@ def register():
 
             return jsonify(add_user), 201
 
-        else:
-            return jsonify({"error": "Invalid data", "problems": errors}), 400
 
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
@@ -276,19 +297,24 @@ def login():
         errors = validate_login_data(data)  # validate data in a helper function
 
         if errors:
-            return jsonify({"errors": errors
-            }), 400
+            if isinstance(errors, dict):  # Database error
+                return jsonify(errors), 500
+            return jsonify({
+                "error": "Invalid credentials",
+                "problems": errors
+            }), 401
+           
         
         # From db_utils
         # makes the app accept either a name or email
-        user = user_id(name=data["name"]).first()
-        user = user_id(email=data["email"]).first()
+        # gets User ID info from email
+        user_id = get_logged_in_user_id(data["email"])
 
-        if not user or not password(data["password"]):
-           return jsonify({"error": "Invalid credentials"
-        }), 401
+        if not user_id:
+            return jsonify({
+                "error": "User not found"
+            }), 404
         
-        access = create_access(identity=user.id) # access to be granted 
 
         return jsonify({"message":"YOU HAVE SUCCESSFULLY LOGGED IN",
                         " access": hashed_entry, # add hashed function
@@ -405,16 +431,19 @@ def add_journal_entry():
                 }), 400
 
         data = request.get_json()
-        entry.integrity_hash = hash_entry(user_id,entry.title,entry.content)
         errors = validate_add_journal_entry(data)
         print(errors)# validate data in a helper function
+
+        if errors:
+            return jsonify({
+                "error": "Invalid journal data",
+                "problems": errors
+            }), 400
 
         if errors is None:
             add_row = create_journal_entry(data)   # Add journal entry to table in db_utils file
             return jsonify(add_row), 201
-        else:
-            return jsonify({"errors": errors}), 400
-
+        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
