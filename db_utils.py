@@ -333,6 +333,11 @@ def update_journal_entry(entry_id, data):
         # Save changes to the database
         db.commit()
 
+        # Check if any row was actually updated
+        # If rowcount is 0, the entry_id did not match any journal entry
+        if cursor.rowcount == 0:
+            return {"error": "Journal entry not found"}
+
         # Return success message
         return {"message": "Journal Entry Successfully Updated"}
 

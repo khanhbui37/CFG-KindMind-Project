@@ -372,7 +372,8 @@ def view_journal_entry():
     user_id = request.args.get("user_id")
 
     # Retrieve all journal entries for the specified user
-    entries = get_user_journal_entries(user_id)
+    # If no entries are found, use an empty list to avoid errors when using len()
+    entries = get_user_journal_entries(user_id) or []
 
     # Return the journal entries as a JSON response
     return jsonify({
@@ -399,8 +400,28 @@ def edit_journal_entry(entry_id):
         # Retrieve the updated journal entry data from the request
         data = request.get_json()
 
+        # Validate title and content are provided
+        title = data.get("title")
+        content = data.get("content")
+
+        if not title or not title.strip():
+            return jsonify({
+                "status": "error",
+                "message": "Title cannot be empty"
+            }), 400
+
+        if not content or not content.strip():
+            return jsonify({
+                "status": "error",
+                "message": "Content cannot be empty"
+            }), 400
+
         # Call the database function to update the journal entry
         updated_entry = update_journal_entry(entry_id, data)
+
+        # If the journal entry does not exist, return a 404 response
+        if "error" in updated_entry:
+            return jsonify(updated_entry), 404
 
         # Return a success response
         return jsonify(updated_entry), 200
