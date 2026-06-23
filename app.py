@@ -85,6 +85,10 @@ def validate_user_fields (data):
 
     try:
         db = get_connection()  # connect to database
+
+        if db is None: 
+            return {"error": "Database connection failed"}
+        
         cursor = db.cursor()
 
         cursor.execute("""USE KindMind""")
