@@ -124,10 +124,18 @@ def validate_user_fields (data):
 def validate_login_data(data):
     errors = []
 
-    user_password = data.get('password')
-    user_email = data.get('email')
+    # Get login fields from the request body.
+    # Default to empty strings so missing fields do not crash validation.
+    user_password = data.get("password", "")
+    user_email = data.get("email", "")
 
-    if not user_email or not user_password:
+    # Email and password must both be strings.
+    if not isinstance(user_email, str) or not isinstance(user_password, str):
+        errors.append("Email and password are required.")
+        return errors
+
+    # Email and password cannot be empty.
+    if not user_email.strip() or not user_password:
         errors.append("Email and password are required.")
         return errors
 
