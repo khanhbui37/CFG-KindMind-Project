@@ -86,7 +86,35 @@ This project was developed as part of the CFGDegree Software & Data Engineering 
 
 ## ⚙️ Installation & Setup
 
-*To be confirmed*
+### Prerequisites
+
+Make sure you have the following installed:
+- Python 3.x — [download here](https://www.python.org/downloads/)
+- MySQL — [download here](https://dev.mysql.com/downloads/)
+- Git — [download here](https://git-scm.com/)
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/khanhbui37/CFG-KindMind-Project.git
+cd CFG-KindMind-Project
+```
+
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Set up environment variables
+
+Copy the example environment file and fill in your details:
+
+```bash
+cp .env_example .env
+```
+
+Open `.env` and update:
 
 ---
 
