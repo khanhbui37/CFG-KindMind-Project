@@ -80,9 +80,15 @@ This project was developed as part of the CFGDegree Software & Data Engineering 
 
 ## 🛠️ Technologies Used
 
-*To be confirmed*
+- **Python** — core programming language
+- **Flask** — web framework and REST API
+- **MySQL** — database
+- **Werkzeug** — secure password hashing
+- **mysql-connector-python** — database connection
+- **python-dotenv** — environment variable management
+- **requests** — external API calls
 
----
+ ---
 
 ## ⚙️ Installation & Setup
 
