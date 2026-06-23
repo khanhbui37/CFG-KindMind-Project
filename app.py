@@ -162,29 +162,34 @@ def validate_login_data(data):
         errors.append("Password must contain a special character.")
 
 
-# verifies data in DB
+    # verifies data in DB
     db = None
     cursor = None
 
     try:
-        db = get_connection()  # connect to database
-        cursor = db.cursor()
+        db = get_connection()
+
+        if db is None:
+            return {"error": "Database connection failed."}
+
+        cursor = db.cursor(dictionary=True)
 
         cursor.execute("""USE KindMind""")
 
         query = """
-        SELECT * 
-        FROM users 
-        WHERE email = %s AND hashed_password = %s
+        SELECT user_id, email, hashed_password
+        FROM users
+        WHERE email = %s
         """
 
-        cursor.execute(query, (user_email, user_password))
-        result = cursor.fetchone()
+        cursor.execute(query, (user_email,))
+        user = cursor.fetchone()
 
-        hashed_input = hash_password(user_password)
+        if not user:
+            errors.append("Email and password do not match.")
 
-        if not result:
-            errors.append("Email and Password doesn't match")
+        elif not verify_password(user["hashed_password"], user_password):
+            errors.append("Email and password do not match.")
 
 
     except mysql.connector.OperationalError as e:
