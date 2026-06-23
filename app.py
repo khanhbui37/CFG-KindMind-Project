@@ -165,6 +165,9 @@ def validate_login_data(data):
     elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
         errors.append("Password must contain a special character.")
 
+    # If email/password format validation has failed, return before checking the database
+    if errors: 
+        return errors
 
     # verifies data in DB
     db = None
