@@ -361,10 +361,10 @@ def login():
             }), 404
         
 
-        return jsonify({"message":"YOU HAVE SUCCESSFULLY LOGGED IN",
-                        " access": hashed_entry, # add hashed function
-                        "user_id" : user_id
-            }), 200
+        return jsonify({
+            "message": "YOU HAVE SUCCESSFULLY LOGGED IN",
+            "user_id": user_id
+        }), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
