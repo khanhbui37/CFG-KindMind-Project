@@ -9,7 +9,6 @@ from db_utils import (
     get_logged_in_user_id
 )
 from werkzeug.security import generate_password_hash, check_password_hash
-import hashlib
 import re
 import mysql.connector
 
@@ -241,14 +240,14 @@ def validate_add_journal_entry(data):
     if not isinstance(title, str) or not title.strip():
         errors.append("Title is required.")
 
-    if len(title.strip()) > 100:
+    elif len(title.strip()) > 100:
         errors.append("Title cannot exceed 100 characters.")
 
     # Validate content.
     if not isinstance(content, str) or not content.strip():
         errors.append("Content is required.")
 
-    if len(content) > 5000:
+    elif len(content) > 5000:
         errors.append("Content cannot exceed 5000 characters.")
 
     # Validate mood category.
