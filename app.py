@@ -25,7 +25,6 @@ def verify_password(stored_hash, password):
 
 # Helper function to validate user info.
 def validate_user_fields (data):
-
     errors=[]
 
     # Get user registration fields from the request body.
