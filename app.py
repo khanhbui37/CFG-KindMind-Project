@@ -24,12 +24,12 @@ def hash_password(password):
 def verify_password(stored_hash, password): 
     return check_password_hash(stored_hash, password)
 
-# Optional future improvement:
-# This creates a data integrity hash for a journal entry.
-# It does not encrypt or hide the journal title/content.
-def hash_entry(user_id, title, content):
-    data = f"{user_id}:{title}:{content}"
-    return hashlib.sha256(data.encode()).hexdigest()
+# # Optional future improvement:
+# # This creates a data integrity hash for a journal entry.
+# # It does not encrypt or hide the journal title/content.
+# def hash_entry(user_id, title, content):
+#     data = f"{user_id}:{title}:{content}"
+#     return hashlib.sha256(data.encode()).hexdigest()
 
 # Helper function to validate user info.
 def validate_user_fields (data):
@@ -56,28 +56,36 @@ def validate_user_fields (data):
         errors.append("Name can only contain letters and spaces.")
     
     # Email validation
+    # Check that email is a string and matches a basic email format.
     pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
-    if not re.match(pattern, user_email):
+    if not isinstance(user_email, str) or not re.match(pattern, user_email):
         errors.append("Invalid email format.")
-    
+
     # Password validation
-    if len(user_password) < 7:
+    # Check that password is a string and meets the minimum length requirement.
+    if not isinstance(user_password, str) or len(user_password) < 7:
         errors.append("Password must be at least 7 characters.")
 
-    if not re.search(r"[A-Z]", user_password):
+    # Check that password contains at least one uppercase letter.
+    elif not re.search(r"[A-Z]", user_password):
         errors.append("Password must contain an uppercase letter.")
 
-    if not re.search(r"[a-z]", user_password):
+    # Check that password contains at least one lowercase letter.
+    elif not re.search(r"[a-z]", user_password):
         errors.append("Password must contain a lowercase letter.")
 
-    if not re.search(r"\d", user_password):
+    # Check that password contains at least one number.
+    elif not re.search(r"\d", user_password):
         errors.append("Password must contain a number.")
 
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
+    # Check that password contains at least one special character.
+    elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
         errors.append("Password must contain a special character.")
 
+   
    # Checks if email exists already
+
     db = None
     cursor = None
 
@@ -270,7 +278,6 @@ def get_homepage():
 @app.route("/register", methods=["POST"])
 def register():
     try:
-
         if not request.is_json:
             return jsonify({
                 "error": "Invalid data",
@@ -278,24 +285,22 @@ def register():
             }), 400
 
         data = request.get_json()
-        # Validates all the fields required on creation
+
+        # Validate all fields before creating the user.
         errors = validate_user_fields(data)
 
-        
-        if errors :
-            if isinstance(errors, dict):
-                return jsonify(errors), 500
-            return jsonify({"error": "Invalid data", "problems": errors}), 400
-
-        data['password'] = hash_password(data['password'])
-        add_user = create_user(data)
-
         if errors:
-            if isinstance(errors, dict): # DB error
+            if isinstance(errors, dict):  # DB error
                 return jsonify(errors), 500
-            return jsonify({"error": "Invalid data", "problems": errors}), 400
 
-        data['password'] = hash_password(data['password'])
+            return jsonify({
+                "error": "Invalid data",
+                "problems": errors
+            }), 400
+
+        # Hash the password before saving it to the database.
+        data["password"] = hash_password(data["password"])
+
         add_user = create_user(data)
 
         if "error" in add_user:
@@ -303,9 +308,11 @@ def register():
 
         return jsonify(add_user), 201
 
-
     except Exception as e:
-        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+        return jsonify({
+            "error": "Internal server error",
+            "message": str(e)
+        }), 500
 
 
 @app.route("/login", methods=["POST"])
@@ -342,6 +349,7 @@ def login():
         
 
         return jsonify({"message":"YOU HAVE SUCCESSFULLY LOGGED IN",
+                        " access": hashed_entry, # add hashed function
                         "user_id" : user_id
             }), 200
 
