@@ -75,9 +75,11 @@ def validate_user_fields (data):
     elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
         errors.append("Password must contain a special character.")
 
-   
+   # If basic validation has already failed, return the errors before checking the database.
+    if errors:
+        return errors
+    
    # Checks if email exists already
-
     db = None
     cursor = None
 
