@@ -1,5 +1,5 @@
 import mysql.connector
-from config_example import db_config
+from config import db_config
 
 # Helper function to connect to database
 def get_connection():
@@ -157,7 +157,7 @@ def create_user(data):
         values = (
             data["name"],
             data["email"],
-            data["password"]
+            data["password"] # already hashed in app.py before saving
         )
 
         cursor.execute("""USE KindMind""")
