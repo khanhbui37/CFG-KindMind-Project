@@ -282,20 +282,26 @@ def register():
         errors = validate_user_fields(data)
 
         
-
         if errors :
-            if ininstance(errors, dict): # DB error
-              return jsonify(errors), 500
-            return jsonify({"error": "Invalid data", "problems": errors
-            }), 400
+            if isinstance(errors, dict):
+                return jsonify(errors), 500
+            return jsonify({"error": "Invalid data", "problems": errors}), 400
 
-            data['password'] = hash_password(data['password']) # starts hashing inputted password 
-            add_user = create_user(data)  # Add new user to users table in db_utils file
+        data['password'] = hash_password(data['password'])
+        add_user = create_user(data)
 
-            if "error" in add_user:
-                return jsonify(add_user), 400
+        if errors:
+            if isinstance(errors, dict): # DB error
+                return jsonify(errors), 500
+            return jsonify({"error": "Invalid data", "problems": errors}), 400
 
-            return jsonify(add_user), 201
+        data['password'] = hash_password(data['password'])
+        add_user = create_user(data)
+
+        if "error" in add_user:
+            return jsonify(add_user), 400
+
+        return jsonify(add_user), 201
 
 
     except Exception as e:
@@ -336,7 +342,6 @@ def login():
         
 
         return jsonify({"message":"YOU HAVE SUCCESSFULLY LOGGED IN",
-                        " access": hashed_entry, # add hashed function
                         "user_id" : user_id
             }), 200
 
