@@ -138,26 +138,32 @@ def validate_login_data(data):
         errors.append("Email and password are required.")
         return errors
 
-# Email
+    # Email validation
+    # Check that email matches a basic email format.
     pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
     if not re.match(pattern, user_email):
         errors.append("Invalid email format.")
 
-# password
+    # Password validation
+    # Check that password meets the minimum length requirement.
     if len(user_password) < 7:
         errors.append("Password must be at least 7 characters.")
 
-    if not re.search(r"[A-Z]", user_password):
+    # Check that password contains at least one uppercase letter.
+    elif not re.search(r"[A-Z]", user_password):
         errors.append("Password must contain an uppercase letter.")
 
-    if not re.search(r"[a-z]", user_password):
+    # Check that password contains at least one lowercase letter.
+    elif not re.search(r"[a-z]", user_password):
         errors.append("Password must contain a lowercase letter.")
 
-    if not re.search(r"\d", user_password):
+    # Check that password contains at least one number.
+    elif not re.search(r"\d", user_password):
         errors.append("Password must contain a number.")
 
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
+    # Check that password contains at least one special character.
+    elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
         errors.append("Password must contain a special character.")
 
 
