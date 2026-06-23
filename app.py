@@ -23,13 +23,6 @@ def hash_password(password):
 def verify_password(stored_hash, password): 
     return check_password_hash(stored_hash, password)
 
-# # Optional future improvement:
-# # This creates a data integrity hash for a journal entry.
-# # It does not encrypt or hide the journal title/content.
-# def hash_entry(user_id, title, content):
-#     data = f"{user_id}:{title}:{content}"
-#     return hashlib.sha256(data.encode()).hexdigest()
-
 # Helper function to validate user info.
 def validate_user_fields (data):
 
