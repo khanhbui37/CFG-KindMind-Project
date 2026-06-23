@@ -484,7 +484,7 @@ def add_journal_entry():
 
         data = request.get_json()
         errors = validate_add_journal_entry(data)
-        print(errors)# validate data in a helper function
+        
 
         if errors:
             return jsonify({
