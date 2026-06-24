@@ -1,5 +1,5 @@
 import mysql.connector
-from config import db_config
+from config_example import db_config
 
 # Helper function to connect to database
 def get_connection():
@@ -20,8 +20,8 @@ def create_database():
         cursor = db.cursor()
 
         # create database and tables if not exists before
-        cursor.execute("CREATE DATABASE IF NOT EXISTS kindMind")
-        cursor.execute("USE kindMind")
+        cursor.execute("CREATE DATABASE IF NOT EXISTS KindMind")
+        cursor.execute("USE KindMind")
 
         tables = {
             "users": """ CREATE TABLE IF NOT EXISTS users (
@@ -160,7 +160,7 @@ def create_user(data):
             data["password"]
         )
 
-        cursor.execute("""USE kindMind""")
+        cursor.execute("""USE KindMind""")
         cursor.execute(query, values)
 
         db.commit()
@@ -216,7 +216,7 @@ def create_journal_entry(data):
             data["recommendations"]
         )
 
-        cursor.execute("""USE kindMind""")
+        cursor.execute("""USE KindMind""")
         cursor.execute(query, values)
 
         db.commit()
@@ -497,7 +497,7 @@ def get_searched_entries(user_id, mood, keyword, sort, limit):
         query += " LIMIT %s"
         params.append(limit)
 
-        cursor.execute("USE kindMind")
+        cursor.execute("USE KindMind")
         cursor.execute(query, params)
         entries = cursor.fetchall()
 
@@ -557,7 +557,7 @@ def get_user_mood_summary(user_id):
         GROUP BY user_id
         """
 
-        cursor.execute("USE kindMind")
+        cursor.execute("USE KindMind")
         cursor.execute(query, (user_id,))
         summary = cursor.fetchone()
 
@@ -592,7 +592,7 @@ def get_common_mood_category(user_id):
         ORDER BY count DESC
         LIMIT 1"""
 
-        cursor.execute("USE kindMind")
+        cursor.execute("USE KindMind")
         cursor.execute(query, (user_id,))
         common_category = cursor.fetchone()
 
@@ -606,3 +606,7 @@ def get_common_mood_category(user_id):
             db.close()
 
     return common_category["category_name"] if common_category else None
+
+# Backwards-compatible alias for existing tests branch naming (test_kindmind.py)
+def create_data_base():
+    return create_database()
