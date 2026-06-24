@@ -17,6 +17,14 @@ import mysql.connector
 
 app = Flask(__name__)
 
+# Hash password before saving it to the database.
+def hash_password(password):
+    return generate_password_hash(password)
+
+# Check typed password against the stored password hash.
+def verify_password(stored_hash, password):
+    return check_password_hash(stored_hash, password)
+
 #Helper function to validate user info.
 def validate_user_fields (data):
 
