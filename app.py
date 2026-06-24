@@ -316,25 +316,40 @@ def register():
             "message": str(e)
         }), 500
 
-
 @app.route("/login", methods=["POST"])
 def login():
     try:
         if not request.is_json:
             return jsonify({
-                    "status": "error",
-                    "message": "Request must be JSON",
-                    "error": "INVALID_CONTENT_TYPE"
-                }), 400
+                "status": "error",
+                "message": "Request must be JSON",
+                "error": "INVALID_CONTENT_TYPE"
+            }), 400
 
         data = request.get_json()
-        errors = validate_login_data(data)  # validate data in a helper function
+        errors = validate_login_data(data)
 
-        if errors is None:
-            return jsonify({"message":"YOU HAVE SUCCESSFULLY LOGGED IN"}), 200
+        if errors:
+            if isinstance(errors, dict):  # Database error
+                return jsonify(errors), 500
 
-        else:
-            return jsonify({"errors": errors}), 400
+            return jsonify({
+                "error": "Invalid credentials",
+                "problems": errors
+            }), 401
+
+        # Get user ID from email so the console can use it for journal actions.
+        user_id = get_logged_in_user_id(data["email"])
+
+        if not user_id:
+            return jsonify({
+                "error": "User not found"
+            }), 404
+
+        return jsonify({
+            "message": "YOU HAVE SUCCESSFULLY LOGGED IN",
+            "user_id": user_id
+        }), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
