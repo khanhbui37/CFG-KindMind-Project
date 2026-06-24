@@ -405,33 +405,55 @@ def delete_journal_entry(entry_id):
         if db:
             db.close()
 
-def get_logged_in_user_id(user_email):
+def get_logged_in_user_id(email):
     db = None
     cursor = None
-    logged_info = None
 
     try:
         db = get_connection()
+
+        if db is None:
+            return None
+
         cursor = db.cursor(dictionary=True)
 
+        cursor.execute("""USE KindMind""")
+
         query = """
-            SELECT user_id FROM users 
-            WHERE email = %s"""
+        SELECT user_id
+        FROM users
+        WHERE email = %s
+        """
 
-        cursor.execute("USE kindMind")
-        cursor.execute(query, (user_email,))
-        logged_info = cursor.fetchone()
+        cursor.execute(query, (email,))
+        result = cursor.fetchone()
 
-    except mysql.connector.Error as error:
-        print(f"Something went wrong: {error}")
+        if result:
+            return result["user_id"]
+
+        return None
+
+    except mysql.connector.OperationalError as e:
+        print(f"Database connection issue: {e}")
+        return None
+
+    except mysql.connector.ProgrammingError as e:
+        print(f"SQL error: {e}")
+        return None
+
+    except mysql.connector.Error as e:
+        print(f"MySQL error: {e}")
+        return None
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None
 
     finally:
         if cursor:
             cursor.close()
         if db:
             db.close()
-
-    return logged_info["user_id"] if logged_info else None
 
 
 
