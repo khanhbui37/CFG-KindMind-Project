@@ -25,55 +25,67 @@ def hash_password(password):
 def verify_password(stored_hash, password):
     return check_password_hash(stored_hash, password)
 
-#Helper function to validate user info.
-def validate_user_fields (data):
+# Helper function to validate user info.
+def validate_user_fields(data):
 
-    errors=[]
+    errors = []
 
-    user_name = data.get('name')
-    user_email = data.get('email')
-    user_password = data.get('password')
+    # Get user registration fields from the request body.
+    # Default to an empty string so validation does not crash if a field is missing.
+    user_name = data.get("name", "")
+    user_email = data.get("email", "")
+    user_password = data.get("password", "")
 
-
-    if not user_name.strip():
+    # Name validation
+    if not isinstance(user_name, str) or not user_name.strip():
         errors.append("Name cannot be empty.")
 
-    if len(user_name.strip()) < 2:
+    elif len(user_name.strip()) < 2:
         errors.append("Name must be at least 2 characters.")
 
-    if not re.match(r"^[A-Za-z ]+$", user_name):
+    elif not re.match(r"^[A-Za-z ]+$", user_name):
         errors.append("Name can only contain letters and spaces.")
 
+    # Email validation
     pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
-    if not re.match(pattern, user_email):
+    if not isinstance(user_email, str) or not re.match(pattern, user_email):
         errors.append("Invalid email format.")
 
-    if len(user_password) < 7:
+    # Password validation
+    if not isinstance(user_password, str) or len(user_password) < 7:
         errors.append("Password must be at least 7 characters.")
 
-    if not re.search(r"[A-Z]", user_password):
+    elif not re.search(r"[A-Z]", user_password):
         errors.append("Password must contain an uppercase letter.")
 
-    if not re.search(r"[a-z]", user_password):
+    elif not re.search(r"[a-z]", user_password):
         errors.append("Password must contain a lowercase letter.")
 
-    if not re.search(r"\d", user_password):
+    elif not re.search(r"\d", user_password):
         errors.append("Password must contain a number.")
 
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
+    elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
         errors.append("Password must contain a special character.")
 
+    # If basic validation has already failed, return before checking the database.
+    if errors:
+        return errors
 
+    # Checks if email exists already.
     db = None
     cursor = None
 
     try:
-        db = get_connection()  # connect to database
+        db = get_connection()
+
+        if db is None:
+            return {"error": "Database connection failed."}
+
         cursor = db.cursor()
 
-        cursor.execute("""USE kindMind""")
-        cursor.execute("SELECT * FROM users WHERE email= %s", (user_email,))
+        cursor.execute("""USE KindMind""")
+        cursor.execute("SELECT * FROM users WHERE email = %s", (user_email,))
         result = cursor.fetchone()
 
         if result:
