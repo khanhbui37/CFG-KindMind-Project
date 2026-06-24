@@ -280,7 +280,6 @@ def get_homepage():
 @app.route("/register", methods=["POST"])
 def register():
     try:
-
         if not request.is_json:
             return jsonify({
                 "error": "Invalid data",
@@ -288,22 +287,34 @@ def register():
             }), 400
 
         data = request.get_json()
-        # Validates all the fields required on creation
+
+        # Validate all fields before creating the user.
         errors = validate_user_fields(data)
 
-        if errors is None:
-            add_user = create_user(data)  # Add new user to users table in db_utils file
+        if errors:
+            if isinstance(errors, dict):  # DB error
+                return jsonify(errors), 500
 
-            if "error" in add_user:
-                return jsonify(add_user), 400
+            return jsonify({
+                "error": "Invalid data",
+                "problems": errors
+            }), 400
 
-            return jsonify(add_user), 201
+        # Hash the password before saving it to the database.
+        data["password"] = hash_password(data["password"])
 
-        else:
-            return jsonify({"error": "Invalid data", "problems": errors}), 400
+        add_user = create_user(data)
+
+        if "error" in add_user:
+            return jsonify(add_user), 400
+
+        return jsonify(add_user), 201
 
     except Exception as e:
-        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+        return jsonify({
+            "error": "Internal server error",
+            "message": str(e)
+        }), 500
 
 
 @app.route("/login", methods=["POST"])
