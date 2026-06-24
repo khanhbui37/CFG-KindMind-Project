@@ -1,59 +1,91 @@
 from flask import Flask, jsonify, request
-from db_utils import get_connection, get_user_mood_summary, get_common_mood_category, create_user, create_journal_entry, get_searched_entries, get_user_journal_entries, update_journal_entry, delete_journal_entry
+from db_utils import (
+    get_connection,
+    get_user_mood_summary,
+    get_common_mood_category,
+    create_user,
+    create_journal_entry,
+    get_searched_entries,
+    get_user_journal_entries,
+    update_journal_entry,
+    delete_journal_entry,
+    get_logged_in_user_id
+)
+from werkzeug.security import generate_password_hash, check_password_hash
 import re
 import mysql.connector
 
 app = Flask(__name__)
 
-#Helper function to validate user info.
-def validate_user_fields (data):
+# Hash password before saving it to the database.
+def hash_password(password):
+    return generate_password_hash(password)
 
-    errors=[]
+# Check typed password against the stored password hash.
+def verify_password(stored_hash, password):
+    return check_password_hash(stored_hash, password)
 
-    user_name = data.get('name')
-    user_email = data.get('email')
-    user_password = data.get('password')
+# Helper function to validate user info.
+def validate_user_fields(data):
 
+    errors = []
 
-    if not user_name.strip():
+    # Get user registration fields from the request body.
+    # Default to an empty string so validation does not crash if a field is missing.
+    user_name = data.get("name", "")
+    user_email = data.get("email", "")
+    user_password = data.get("password", "")
+
+    # Name validation
+    if not isinstance(user_name, str) or not user_name.strip():
         errors.append("Name cannot be empty.")
 
-    if len(user_name.strip()) < 2:
+    elif len(user_name.strip()) < 2:
         errors.append("Name must be at least 2 characters.")
 
-    if not re.match(r"^[A-Za-z ]+$", user_name):
+    elif not re.match(r"^[A-Za-z ]+$", user_name):
         errors.append("Name can only contain letters and spaces.")
 
+    # Email validation
     pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
-    if not re.match(pattern, user_email):
+    if not isinstance(user_email, str) or not re.match(pattern, user_email):
         errors.append("Invalid email format.")
 
-    if len(user_password) < 7:
+    # Password validation
+    if not isinstance(user_password, str) or len(user_password) < 7:
         errors.append("Password must be at least 7 characters.")
 
-    if not re.search(r"[A-Z]", user_password):
+    elif not re.search(r"[A-Z]", user_password):
         errors.append("Password must contain an uppercase letter.")
 
-    if not re.search(r"[a-z]", user_password):
+    elif not re.search(r"[a-z]", user_password):
         errors.append("Password must contain a lowercase letter.")
 
-    if not re.search(r"\d", user_password):
+    elif not re.search(r"\d", user_password):
         errors.append("Password must contain a number.")
 
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
+    elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
         errors.append("Password must contain a special character.")
 
+    # If basic validation has already failed, return before checking the database.
+    if errors:
+        return errors
 
+    # Checks if email exists already.
     db = None
     cursor = None
 
     try:
-        db = get_connection()  # connect to database
+        db = get_connection()
+
+        if db is None:
+            return {"error": "Database connection failed."}
+
         cursor = db.cursor()
 
-        cursor.execute("""USE kindMind""")
-        cursor.execute("SELECT * FROM users WHERE email= %s", (user_email,))
+        cursor.execute("""USE KindMind""")
+        cursor.execute("SELECT * FROM users WHERE email = %s", (user_email,))
         result = cursor.fetchone()
 
         if result:
@@ -83,51 +115,74 @@ def validate_user_fields (data):
 def validate_login_data(data):
     errors = []
 
-    user_password = data.get('password')
-    user_email = data.get('email')
+    # Get login fields from the request body.
+    user_password = data.get("password", "")
+    user_email = data.get("email", "")
 
+    # Email and password must both be strings.
+    if not isinstance(user_email, str) or not isinstance(user_password, str):
+        errors.append("Email and password are required.")
+        return errors
+
+    # Email and password cannot be empty.
+    if not user_email.strip() or not user_password:
+        errors.append("Email and password are required.")
+        return errors
+
+    # Email validation
     pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
     if not re.match(pattern, user_email):
         errors.append("Invalid email format.")
 
+    # Password validation
     if len(user_password) < 7:
         errors.append("Password must be at least 7 characters.")
 
-    if not re.search(r"[A-Z]", user_password):
+    elif not re.search(r"[A-Z]", user_password):
         errors.append("Password must contain an uppercase letter.")
 
-    if not re.search(r"[a-z]", user_password):
+    elif not re.search(r"[a-z]", user_password):
         errors.append("Password must contain a lowercase letter.")
 
-    if not re.search(r"\d", user_password):
+    elif not re.search(r"\d", user_password):
         errors.append("Password must contain a number.")
 
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
+    elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", user_password):
         errors.append("Password must contain a special character.")
 
+    # If validation has failed, return before checking the database.
+    if errors:
+        return errors
 
+    # Verify login details against database.
     db = None
     cursor = None
 
     try:
-        db = get_connection()  # connect to database
-        cursor = db.cursor()
+        db = get_connection()
 
-        cursor.execute("""USE kindMind""")
+        if db is None:
+            return {"error": "Database connection failed."}
+
+        cursor = db.cursor(dictionary=True)
+
+        cursor.execute("""USE KindMind""")
 
         query = """
-        SELECT * 
-        FROM users 
-        WHERE email = %s AND hashed_password = %s
+        SELECT user_id, email, hashed_password
+        FROM users
+        WHERE email = %s
         """
 
-        cursor.execute(query, (user_email, user_password))
-        result = cursor.fetchone()
+        cursor.execute(query, (user_email,))
+        user = cursor.fetchone()
 
-        if not result:
-            errors.append("Email and Password doesn't match")
+        if not user:
+            errors.append("Email and password do not match.")
 
+        elif not verify_password(user["hashed_password"], user_password):
+            errors.append("Email and password do not match.")
 
     except mysql.connector.OperationalError as e:
         return {"error": f"Database connection issue: {e}"}
@@ -177,14 +232,14 @@ def validate_add_journal_entry(data):
     if not isinstance(title, str) or not title.strip():
         errors.append("Title is required.")
 
-    if len(title.strip()) > 100:
+    elif len(title.strip()) > 100:
         errors.append("Title cannot exceed 100 characters.")
 
     # Validate content.
     if not isinstance(content, str) or not content.strip():
         errors.append("Content is required.")
 
-    if len(content) > 5000:
+    elif len(content) > 5000:
         errors.append("Content cannot exceed 5000 characters.")
 
     # Validate mood category.
@@ -225,7 +280,6 @@ def get_homepage():
 @app.route("/register", methods=["POST"])
 def register():
     try:
-
         if not request.is_json:
             return jsonify({
                 "error": "Invalid data",
@@ -233,42 +287,69 @@ def register():
             }), 400
 
         data = request.get_json()
-        # Validates all the fields required on creation
+
+        # Validate all fields before creating the user.
         errors = validate_user_fields(data)
 
-        if errors is None:
-            add_user = create_user(data)  # Add new user to users table in db_utils file
+        if errors:
+            if isinstance(errors, dict):  # DB error
+                return jsonify(errors), 500
 
-            if "error" in add_user:
-                return jsonify(add_user), 400
+            return jsonify({
+                "error": "Invalid data",
+                "problems": errors
+            }), 400
 
-            return jsonify(add_user), 201
+        # Hash the password before saving it to the database.
+        data["password"] = hash_password(data["password"])
 
-        else:
-            return jsonify({"error": "Invalid data", "problems": errors}), 400
+        add_user = create_user(data)
+
+        if "error" in add_user:
+            return jsonify(add_user), 400
+
+        return jsonify(add_user), 201
 
     except Exception as e:
-        return jsonify({"error": "Internal server error", "message": str(e)}), 500
-
+        return jsonify({
+            "error": "Internal server error",
+            "message": str(e)
+        }), 500
 
 @app.route("/login", methods=["POST"])
 def login():
     try:
         if not request.is_json:
             return jsonify({
-                    "status": "error",
-                    "message": "Request must be JSON",
-                    "error": "INVALID_CONTENT_TYPE"
-                }), 400
+                "status": "error",
+                "message": "Request must be JSON",
+                "error": "INVALID_CONTENT_TYPE"
+            }), 400
 
         data = request.get_json()
-        errors = validate_login_data(data)  # validate data in a helper function
+        errors = validate_login_data(data)
 
-        if errors is None:
-            return jsonify({"message":"YOU HAVE SUCCESSFULLY LOGGED IN"}), 200
+        if errors:
+            if isinstance(errors, dict):  # Database error
+                return jsonify(errors), 500
 
-        else:
-            return jsonify({"errors": errors}), 400
+            return jsonify({
+                "error": "Invalid credentials",
+                "problems": errors
+            }), 401
+
+        # Get user ID from email so the console can use it for journal actions.
+        user_id = get_logged_in_user_id(data["email"])
+
+        if not user_id:
+            return jsonify({
+                "error": "User not found"
+            }), 404
+
+        return jsonify({
+            "message": "YOU HAVE SUCCESSFULLY LOGGED IN",
+            "user_id": user_id
+        }), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
