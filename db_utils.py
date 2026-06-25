@@ -244,34 +244,216 @@ def create_journal_entry(data):
         if db:
             db.close()
 
+# Retrieve all journal entries for a specific user
+def get_user_journal_entries(user_id):
 
-def get_logged_in_user_id(user_email):
+    # Create variables for the database connection, cursor and query results
     db = None
     cursor = None
-    logged_info = None
+    entries = None
+
+    try:
+        # Connect to the MySQL database
+        db = get_connection()
+
+        # Create a cursor that returns results as dictionaries
+        cursor = db.cursor(dictionary=True)
+
+        # SQL query to retrieve all journal entries for the selected user
+        # Entries are ordered by creation date with the newest entries first
+        query = """
+        SELECT *
+        FROM journal_entries
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+        """
+
+        # Select the KindMind database
+        cursor.execute("USE kindMind")
+
+        # Execute the query using the supplied user ID
+        cursor.execute(query, (user_id,))
+
+        # Retrieve all matching journal entries
+        entries = cursor.fetchall()
+
+
+    except mysql.connector.Error as error:
+        # Handle any database-related errors
+        return {"error": f"Database error: {error}"}
+
+    finally:
+        # Close the cursor if it exists
+        if cursor:
+            cursor.close()
+
+        # Close the database connection
+        if db:
+            db.close()
+
+    # Return the journal entries if any are found,
+    # otherwise return None
+    return entries if entries else None
+
+# Update an existing journal entry in the database using the entry ID
+def update_journal_entry(entry_id, data):
+    # Create variables for the database connection and cursor
+    db = None
+    cursor = None
+
+    try:
+        # Connect to the MySQL database
+        db = get_connection()
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # Currently allows updating the journal title and content.
+        # Additional fields can be added in future iterations if required.
+        query = """
+        UPDATE journal_entries
+        SET title = %s,
+            content = %s
+        WHERE entry_id = %s
+        """
+
+        # Values that will replace the placeholders (%s)
+        values = (
+            data["title"],
+            data["content"],
+            entry_id
+        )
+
+        # Select the KindMind database
+        cursor.execute("USE kindMind")
+
+        # Execute the update query
+        cursor.execute(query, values)
+
+        # Save changes to the database
+        db.commit()
+
+        # Check if any row was actually updated
+        # If rowcount is 0, the entry_id did not match any journal entry
+        if cursor.rowcount == 0:
+            return {"error": "Journal entry not found"}
+
+        # Return success message
+        return {"message": "Journal Entry Successfully Updated"}
+
+    except mysql.connector.Error as error:
+        # Handle any database-related errors
+        return {"error": f"Database error: {error}"}
+
+    finally:
+        # Close the cursor if it was created
+        if cursor:
+            cursor.close()
+
+        # Close the database connection
+        if db:
+            db.close()
+
+# Delete an existing journal entry from the database using its entry ID
+def delete_journal_entry(entry_id):
+
+    # Set database and cursor to None initially
+    db = None
+    cursor = None
+
+    try:
+        # Create a connection to the MySQL database
+        db = get_connection()
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # SQL query to remove a journal entry matching the given entry ID
+        query = """
+        DELETE FROM journal_entries
+        WHERE entry_id = %s
+        """
+
+        # Store the entry ID in a tuple to safely pass into the query
+        # The comma is required because this is a single-value tuple
+        values = (entry_id,)
+
+        # Select the KindMind database
+        cursor.execute("USE kindMind")
+        cursor.execute(query, values)
+
+        db.commit()
+
+        # Check if any row was actually deleted
+        if cursor.rowcount == 0:
+            return {"error": "Journal entry not found"}
+
+        # Return a success message if the deletion was successful
+        return {"message": "Journal Entry Successfully Deleted"}
+
+
+    except mysql.connector.Error as error:
+        # Return an error message if a database error occurs
+        return {"error": f"Database error: {error}"}
+
+    finally:
+        # Close the cursor if it was opened
+        if cursor:
+            cursor.close()
+
+        # Close the database connection if it was opened
+        if db:
+            db.close()
+
+def get_logged_in_user_id(email):
+    db = None
+    cursor = None
 
     try:
         db = get_connection()
+
+        if db is None:
+            return None
+
         cursor = db.cursor(dictionary=True)
 
+        cursor.execute("""USE KindMind""")
+
         query = """
-            SELECT user_id FROM users 
-            WHERE email = %s"""
+        SELECT user_id
+        FROM users
+        WHERE email = %s
+        """
 
-        cursor.execute("USE KindMind")
-        cursor.execute(query, (user_email,))
-        logged_info = cursor.fetchone()
+        cursor.execute(query, (email,))
+        result = cursor.fetchone()
 
-    except mysql.connector.Error as error:
-        print(f"Something went wrong: {error}")
+        if result:
+            return result["user_id"]
+
+        return None
+
+    except mysql.connector.OperationalError as e:
+        print(f"Database connection issue: {e}")
+        return None
+
+    except mysql.connector.ProgrammingError as e:
+        print(f"SQL error: {e}")
+        return None
+
+    except mysql.connector.Error as e:
+        print(f"MySQL error: {e}")
+        return None
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None
 
     finally:
         if cursor:
             cursor.close()
         if db:
             db.close()
-
-    return logged_info["user_id"] if logged_info else None
 
 
 
