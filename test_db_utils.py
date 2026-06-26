@@ -1,3 +1,16 @@
+#===================================================================
+# UNIT TESTS FOR KINDMIND DB UTILS
+#===================================================================
+# - mocks the database connection and cursor
+# - checks database/table creation runs expected SQL
+# - checks user and journal insert functions commit changes
+# - checks journal view/edit/delete helpers return expected results
+# - checks login user ID lookup returns the correct user_id
+# - checks search helper builds keyword, mood and sort filters
+# - checks common mood helper returns the most frequent mood category
+# - confirms connection failures return safely instead of crashing
+#===================================================================
+
 import sys
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
