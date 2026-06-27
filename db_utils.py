@@ -297,6 +297,7 @@ def get_user_journal_entries(user_id):
 
 # Update an existing journal entry in the database using the entry ID
 def update_journal_entry(entry_id, data):
+
     # Create variables for the database connection and cursor
     db = None
     cursor = None
@@ -306,7 +307,19 @@ def update_journal_entry(entry_id, data):
         db = get_connection()
 
         # Create a cursor to execute SQL queries
-        cursor = db.cursor()
+        cursor = db.cursor(dictionary=True)
+
+        # Select database kindMind
+        cursor.execute("USE kindMind")
+
+        cursor.execute(
+            "SELECT entry_id FROM journal_entries WHERE entry_id = %s",
+            (entry_id,)
+        )
+
+        if cursor.fetchone() is None:
+            return {"error": "Journal entry not found"}
+
 
         # Currently allows updating the journal title and content.
         # Additional fields can be added in future iterations if required.
@@ -324,22 +337,22 @@ def update_journal_entry(entry_id, data):
             entry_id
         )
 
-        # Select the KindMind database
-        cursor.execute("USE kindMind")
-
         # Execute the update query
         cursor.execute(query, values)
 
         # Save changes to the database
         db.commit()
 
-        # Check if any row was actually updated
-        # If rowcount is 0, the entry_id did not match any journal entry
-        if cursor.rowcount == 0:
-            return {"error": "Journal entry not found"}
+        # Retrieve the updated journal entry
+        cursor.execute("""
+                SELECT entry_id, title, content
+                FROM journal_entries
+                WHERE entry_id = %s
+            """, (entry_id,))
 
-        # Return success message
-        return {"message": "Journal Entry Successfully Updated"}
+        updated_entry = cursor.fetchone()
+
+        return updated_entry
 
     except mysql.connector.Error as error:
         # Handle any database-related errors
