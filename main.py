@@ -450,7 +450,7 @@ def view_journal_entry(logged_in_id):
 
     try:
         response = requests.get(
-            f"{BASE_URL}/login/search_entries",
+            f"{BASE_URL}/login/journal_entries",
             params=params
         )
 
@@ -474,7 +474,7 @@ def view_journal_entry(logged_in_id):
 
             print(
                 colorama.Fore.CYAN +
-                f"{entry['entry_id']}. {entry['title']} - Mood: {entry['mood_category']}" +
+                f"{entry['entry_id']}. {entry['title']} - Mood: {entry['mood_category_id']}" +
                 colorama.Style.RESET_ALL
             )
 
@@ -500,45 +500,48 @@ def view_journal_entry(logged_in_id):
                     selected_entry = entry
                     break
 
-                else:
-                    print(
-                        colorama.Fore.RED +
-                        "Invalid entry ID. Please choose an entry from the list." +
-                        colorama.Style.RESET_ALL
-                    )
-                    continue
+            if selected_entry is None:
+                print(
+                    colorama.Fore.RED +
+                    "Invalid entry ID. Please choose an entry from the list." +
+                    colorama.Style.RESET_ALL
+                )
+                continue
+
+            break
+
 
                 # Display the full details of the selected journal entry.
+        if selected_entry:
+            print(
+                colorama.Fore.CYAN +
+                "\n---------- Selected Journal Entry ------------" +
+                colorama.Style.RESET_ALL
+            )
 
-            if selected_entry:
-                print(
-                    colorama.Fore.CYAN +
-                    "\n---------- Selected Journal Entry ------------" +
-                    colorama.Style.RESET_ALL
-                )
+            print(colorama.Fore.CYAN + f"Entry ID: {selected_entry['entry_id']}" + colorama.Style.RESET_ALL)
+            print(colorama.Fore.CYAN + f"Title: {selected_entry['title']}" + colorama.Style.RESET_ALL)
+            print(colorama.Fore.CYAN + f"Content: {selected_entry['content']}" + colorama.Style.RESET_ALL)
+            print(colorama.Fore.CYAN + f"Mood Category: {selected_entry['mood_category_id']}" + colorama.Style.RESET_ALL)
+            print(colorama.Fore.CYAN + f"Mood Score: {selected_entry['mood_score_id']}" + colorama.Style.RESET_ALL)
+            print(colorama.Fore.CYAN + f"Energy Level: {selected_entry['energy_level_id']}" + colorama.Style.RESET_ALL)
+            print(colorama.Fore.CYAN + f"Free Time: {selected_entry['free_time']}" + colorama.Style.RESET_ALL)
+            print(colorama.Fore.CYAN + f"Weather: {selected_entry['weather']}" + colorama.Style.RESET_ALL)
 
-                print(colorama.Fore.CYAN + f"Entry ID: {selected_entry['entry_id']}" + colorama.Style.RESET_ALL)
-                print(colorama.Fore.CYAN + f"Title: {selected_entry['title']}" + colorama.Style.RESET_ALL)
-                print(colorama.Fore.CYAN + f"Content: {selected_entry['content']}" + colorama.Style.RESET_ALL)
-                print(colorama.Fore.CYAN + f"Mood Category: {selected_entry['mood_category']}" + colorama.Style.RESET_ALL)
-                print(colorama.Fore.CYAN + f"Mood Score: {selected_entry['mood_score']}" + colorama.Style.RESET_ALL)
-                print(colorama.Fore.CYAN + f"Energy Level: {selected_entry['energy_level']}" + colorama.Style.RESET_ALL)
-                print(colorama.Fore.CYAN + f"Free Time: {selected_entry['free_time']}" + colorama.Style.RESET_ALL)
-                print(colorama.Fore.CYAN + f"Weather: {selected_entry['weather']}" + colorama.Style.RESET_ALL)
+            # Display the recommendations associated with the journal entry.
+            # These recommendations will eventually come from the database/API.
+            print(
+                colorama.Fore.GREEN +
+                "\nRecommendations:" +
+                colorama.Style.RESET_ALL
+            )
 
-                # Display the recommendations associated with the journal entry.
-                # These recommendations will eventually come from the database/API.
-                print(
-                    colorama.Fore.GREEN +
-                    "\nRecommendations:" +
-                    colorama.Style.RESET_ALL
-                )
+            print(
+                colorama.Fore.GREEN +
+                f"{selected_entry['recommendations']}" +
+                colorama.Style.RESET_ALL
+            )
 
-                print(
-                    colorama.Fore.GREEN +
-                    f"{selected_entry['recommendations']}" +
-                    colorama.Style.RESET_ALL
-                )
     except requests.exceptions.RequestException as e:
         print(colorama.Fore.RED +
             f"\nConnection error: {e}" +
