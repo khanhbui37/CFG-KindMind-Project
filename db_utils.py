@@ -147,12 +147,11 @@ def create_user(data):
         db = get_connection()  # connect to database
         cursor = db.cursor()
 
-
         query = """
-            INSERT INTO users
-            (name, email, hashed_password)
-            VALUES (%s, %s, %s)
-            """
+                    INSERT INTO users
+                    (name, email, hashed_password, created_at)
+                    VALUES (%s, %s, %s, NOW())
+                    """
 
         values = (
             data["name"],
