@@ -30,7 +30,7 @@ class User:
         return check_password_hash(self.password,password)
     
     # fake users 
-    user_a = User ("Katniss", "Katnissforeverdeen@hotmail.com", "password321")
+    user_a = User ("Katniss", "Katnissforeverdeen@hotmail.com", "password 456")
     user_b = User ("Finnick", "FinnickOd@gmai.com", "secret789")
 
     # test
