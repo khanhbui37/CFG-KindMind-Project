@@ -497,7 +497,7 @@ def edit_journal_entry(entry_id):
                 "error": "INVALID_CONTENT_TYPE"
             }), 400
 
-        # Retrieve the updated journal entry data from the request
+
         data = request.get_json()
 
         # Validate title and content are provided
@@ -533,8 +533,15 @@ def edit_journal_entry(entry_id):
 # Delete a journal entry using its unique entry ID
 @app.route('/login/journal_entries/<int:entry_id>', methods=['DELETE'])
 def delete_journal(entry_id):
-
     try:
+        # Ensure the request body is JSON
+        if not request.is_json:
+            return jsonify({
+                "status": "error",
+                "message": "Request must be JSON",
+                "error": "INVALID_CONTENT_TYPE"
+            }), 400
+
         # Validate that the entry ID is greater than 0
         if entry_id <= 0:
             return jsonify({

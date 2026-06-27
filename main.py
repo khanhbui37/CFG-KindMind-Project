@@ -495,8 +495,9 @@ def view_journal_entry(logged_in_id):
 
         # Ask the user which journal entry they would like to view.
         # Validation ensures the selected entry ID exists.
-        selected_entry = None
+
         while True:
+            selected_entry = None
             entry_choice = input(
                 colorama.Fore.LIGHTBLUE_EX +
                 "\nEnter Journal ID to View: " +
@@ -504,9 +505,15 @@ def view_journal_entry(logged_in_id):
             )
 
             # Check that the user entered a number.
-            if entry_choice.isdigit():
-                entry_choice = int(entry_choice)
+            if not entry_choice.isdigit():
+                print(
+                    colorama.Fore.RED +
+                    "Please enter a valid number." +
+                    colorama.Style.RESET_ALL
+                )
+                continue
 
+            entry_choice = int(entry_choice)
 
             # Search for the journal entry that matches
             # the ID entered by the user.
@@ -898,8 +905,8 @@ def edit_journal_entry(logged_in_id):
 
         # Ask the user which journal entry they would like to view.
         # Validation ensures the selected entry ID exists.
-        selected_entry = None
         while True:
+            selected_entry = None
             entry_choice = input(
                 colorama.Fore.LIGHTBLUE_EX +
                 "\nEnter Journal ID to Edit: " +
@@ -907,8 +914,15 @@ def edit_journal_entry(logged_in_id):
             )
 
             # Check that the user entered a number.
-            if entry_choice.isdigit():
-                entry_choice = int(entry_choice)
+            if not entry_choice.isdigit():
+                print(
+                    colorama.Fore.RED +
+                    "Please enter a valid number." +
+                    colorama.Style.RESET_ALL
+                )
+                continue
+
+            entry_choice = int(entry_choice)
 
             # Search for the journal entry that matches
             # the ID entered by the user.
@@ -1014,7 +1028,7 @@ def edit_journal_entry(logged_in_id):
 
 
 
-def delete_entry():
+def delete_entry(logged_in_id):
     # Display the Delete Journal Entry heading.
     print(
         colorama.Fore.CYAN +
@@ -1022,133 +1036,147 @@ def delete_entry():
         colorama.Style.RESET_ALL
     )
 
-    # TODO:
-    # Replace this mock data with real journal entries from the database/API.
-    # Currently this list is recreated every time the function runs,
-    # so deleted entries will reappear when the program is restarted.
-    journal_entries = [
-        {
-            "entry_id": 1,
-            "title": "Test Entry 1",
-            "content": "Today was a good day.",
-            "mood_category": "Positive"
-        },
-        {
-            "entry_id": 2,
-            "title": "Test Entry 2",
-            "content": "Feeling a bit tired today.",
-            "mood_category": "Negative"
-        }
-    ]
+    params = {"user_id": logged_in_id
+              }
 
-    # Check if there are any journal entries available.
-    # If the list is empty, inform the user and exit the function.
-    if not journal_entries:
+    try:
+        response = requests.get(
+            f"{BASE_URL}/login/journal_entries",
+            params=params
+        )
+
+        data = response.json()
+
+        if response.status_code != 200:
+            print(data.get("error", "An error occurred while retrieving data"))
+            return
+
+        if not data["entries"]:
+            print("No entries found.")
+            return
+
         print(
-            colorama.Fore.RED +
-            "\nNo journal entries found." +
-            colorama.Style.RESET_ALL
-        )
-        return
-
-    # Display all available journal entries so the user can
-    # choose which one they would like to delete.
-    print(
-        colorama.Fore.YELLOW +
-        "\nAvailable journal entries:" +
-        colorama.Style.RESET_ALL
-    )
-
-    for entry in journal_entries:
-        print(
-            colorama.Fore.CYAN +
-            f"{entry['entry_id']}. {entry['title']} - Mood: {entry['mood_category']}" +
+            colorama.Fore.YELLOW +
+            "\n===== Available Journal Entries to Edit =====:" +
             colorama.Style.RESET_ALL
         )
 
-    # Ask the user which journal entry they would like to delete.
-    # Validation ensures a valid entry ID is selected.
-    while True:
-        entry_choice = input(
-            colorama.Fore.LIGHTBLUE_EX +
-            "\nEnter the entry ID you want to delete: " +
-            colorama.Style.RESET_ALL
-        )
+        for entry in data["entries"]:
+            # Display mood category id as mood category name
+            mood = mood_category_name(entry['mood_category_id'])
+            print(
+                colorama.Fore.CYAN +
+                f"Journal ID:{entry['entry_id']}, Title:{entry['title']}, Mood:{mood}" +
+                colorama.Style.RESET_ALL
+            )
 
-        # Check the user entered a number.
-        if entry_choice.isdigit():
+        # Ask the user which journal entry they would like to view.
+        # Validation ensures the selected entry ID exists.
+        while True:
+            selected_entry = None
+            entry_choice = input(
+                colorama.Fore.LIGHTBLUE_EX +
+                "\nEnter Journal ID to Delete: " +
+                colorama.Style.RESET_ALL
+            )
+
+            # Check that the user entered a number.
+            if not entry_choice.isdigit():
+                print(
+                    colorama.Fore.RED +
+                    "Please enter a valid number." +
+                    colorama.Style.RESET_ALL
+                )
+                continue
+
             entry_choice = int(entry_choice)
 
-            selected_entry = None
 
-            # Search through the journal entries to find
-            # the entry matching the chosen ID.
-            for entry in journal_entries:
+            # Search for the journal entry that matches
+            # the ID entered by the user.
+            for entry in data["entries"]:
                 if entry["entry_id"] == entry_choice:
                     selected_entry = entry
                     break
 
-            # If a matching entry was found, continue.
-            if selected_entry:
+            if selected_entry is None:
+                print(
+                    colorama.Fore.RED +
+                    "Invalid entry ID. Please choose an entry from the list." +
+                    colorama.Style.RESET_ALL
+                )
+                continue
+
+            break
+
+
+        # Display the selected entry before deletion so the user
+        # can confirm they have chosen the correct journal entry.
+        print(colorama.Fore.CYAN + "\nSelected Entry:" + colorama.Style.RESET_ALL)
+        print(colorama.Fore.CYAN + f"Entry ID: {selected_entry['entry_id']}" + colorama.Style.RESET_ALL)
+        print(colorama.Fore.CYAN + f"Title: {selected_entry['title']}" + colorama.Style.RESET_ALL)
+        print(colorama.Fore.CYAN + f"Content: {selected_entry['content']}" + colorama.Style.RESET_ALL)
+
+        # Ask the user to confirm whether they really want
+        # to delete the selected journal entry.
+        while True:
+            confirm_delete = input(
+                colorama.Fore.LIGHTBLUE_EX +
+                "\nAre you sure you want to delete this entry? (Y/N): " +
+                colorama.Style.RESET_ALL
+            ).lower()
+
+            # If the user confirms deletion,
+            # remove the selected entry from the list.
+            if confirm_delete in ["y", "yes"]:
+
+                response = requests.delete(
+                    f"{BASE_URL}/login/journal_entries/{selected_entry['entry_id']}",
+                    json={}
+                )
+
+                data = response.json()
+
+                if response.status_code != 200:
+                    print(
+                        colorama.Fore.RED +
+                        data.get("message", data.get("error", "Failed to delete journal entry.")) +
+                        colorama.Style.RESET_ALL
+                    )
+                    return
+
+
+                print(
+                    colorama.Fore.GREEN +
+                    "\nJournal Entry Deleted Successfully." +
+                    colorama.Style.RESET_ALL
+                )
                 break
 
-        # Display an error message if the entry ID does not exist.
-        print(
-            colorama.Fore.RED +
-            "Invalid entry ID. Please choose an entry from the list." +
-            colorama.Style.RESET_ALL
-        )
+            # If the user chooses not to delete,
+            # leave the journal entry unchanged.
+            elif confirm_delete in ["n", "no"]:
+                print(
+                    colorama.Fore.YELLOW +
+                    "\nCancelled Delete." +
+                    colorama.Style.RESET_ALL
+                )
+                break
 
-    # Display the selected entry before deletion so the user
-    # can confirm they have chosen the correct journal entry.
-    print(colorama.Fore.CYAN + "\nSelected Entry:" + colorama.Style.RESET_ALL)
-    print(colorama.Fore.CYAN + f"Entry ID: {selected_entry['entry_id']}" + colorama.Style.RESET_ALL)
-    print(colorama.Fore.CYAN + f"Title: {selected_entry['title']}" + colorama.Style.RESET_ALL)
-    print(colorama.Fore.CYAN + f"Content: {selected_entry['content']}" + colorama.Style.RESET_ALL)
+            # Validation to ensure only Y or N responses are accepted.
+            else:
+                print(
+                    colorama.Fore.RED +
+                    "Invalid choice. Please enter Y or N." +
+                    colorama.Style.RESET_ALL
+                )
+                continue
 
-    # Ask the user to confirm whether they really want
-    # to delete the selected journal entry.
-    while True:
-        confirm_delete = input(
-            colorama.Fore.LIGHTBLUE_EX +
-            "\nAre you sure you want to delete this entry? (Y/N): " +
-            colorama.Style.RESET_ALL
-        ).lower()
+    except requests.exceptions.RequestException as e:
+        print(colorama.Fore.RED +
+            f"\nConnection error: {e}" +
+            colorama.Style.RESET_ALL)
 
-        # If the user confirms deletion,
-        # remove the selected entry from the list.
-        if confirm_delete in ["y", "yes"]:
-            journal_entries.remove(selected_entry)
-
-            print(
-                colorama.Fore.GREEN +
-                "\nJournal entry deleted successfully." +
-                colorama.Style.RESET_ALL
-            )
-            break
-
-        # If the user chooses not to delete,
-        # leave the journal entry unchanged.
-        elif confirm_delete in ["n", "no"]:
-            print(
-                colorama.Fore.YELLOW +
-                "\nDelete cancelled. Journal entry was not deleted." +
-                colorama.Style.RESET_ALL
-            )
-            break
-
-        # Validation to ensure only Y or N responses are accepted.
-        else:
-            print(
-                colorama.Fore.RED +
-                "Invalid choice. Please enter Y or N." +
-                colorama.Style.RESET_ALL
-            )
-
-    # TODO:
-    # Replace journal_entries.remove() with an API/database delete request.
-    # Once integrated, the journal entry will be permanently removed
-    # from the database rather than from a temporary test list.
 
 def search_entries(logged_in_id):
 
