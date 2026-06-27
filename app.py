@@ -12,10 +12,54 @@ from db_utils import (
     get_logged_in_user_id
 )
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
 import re
 import mysql.connector
 
 app = Flask(__name__)
+
+# OOP Models 
+
+class User:
+    def __init__(self,username,email,password):
+        self.username = username
+        self.email = email
+        self.password = generate_password_hash(password)
+
+    def check_password(self,password):
+        return check_password_hash(self.password,password)
+    
+    # fake users 
+    user_a = User ("Katniss", "Katnissforeverdeen@hotmail.com", "password321")
+    user_b = User ("Finnick", "FinnickOd@gmai.com", "secret789")
+
+    # test
+    print(f"user_a username: {user_a.username}")
+    print(f"user_b username: {user_b.username}")
+    print(f"user_a password correct? {user_a.check_password('secret123')}")
+    print(f"user_b password correct? {user_b.check_password('wrongpass')}")
+
+
+class JournalEntry:
+    def __init__(self, title, content, mood, energy_level):
+        self.title = title
+        self.content = content
+        self.mood = mood
+        self.energy_level = energy_level
+    
+    def get_summary(self):
+        return f"'{self.title}' - Mood: {self.mood}, Energy: {self.energy_level}/10"
+
+# user created entries
+entry_a = JournalEntry("Monday", "Had a fantastic day!", "happy", 9)
+entry_b = JournalEntry("Tuesday", "Felt tired", "calm", 4)
+
+# Use them
+print(f"entry_a: {entry_a.get_summary()}")
+print(f"entry_b: {entry_b.get_summary()}")
+print(f"entry_a mood: {entry_a.mood}")
+print(f"entry_b mood: {entry_b.mood}")
+
 
 # Hash password before saving it to the database.
 def hash_password(password):
