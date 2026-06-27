@@ -105,8 +105,17 @@ def post_login_info():
             print(f"\nLogging In: {data.get('message')}")
             if_logged_in = True
 
+
         else:
-            print(f"\nLogin failed: {data.get('errors')}")
+
+            problems = data.get("problems")
+            error = data.get("error")
+            message = data.get("message")
+
+            if problems:
+                print(f"\nLogin failed: {', '.join(problems)}")
+            else:
+                print(f"\nLogin failed: {error or message}")
 
     except requests.exceptions.ConnectionError:
         print("Could not connect to API server.")
@@ -441,8 +450,16 @@ def post_registration_info():
             print("\n======LOGIN==========")
             post_login_info()
 
+
         else:
-            print(f"\nRegistration failed: {data.get('message')}")
+            problems = data.get("problems")
+            error = data.get("error")
+            message = data.get("message")
+
+            if problems:
+                print(f"\nRegistration failed: {', '.join(problems)}")
+            else:
+                print(f"\nRegistration failed: {error or message}")
 
     except requests.exceptions.ConnectionError:
         print("Could not connect to API server.")
