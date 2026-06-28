@@ -226,8 +226,6 @@ Database: `kindMind`
 
 ## 🧪 Testing Approach
 
-## Testing Approach
-
 KindMind does not follow strict Test-Driven Development. The main application features were built first, and tests were added afterwards to check existing functionality, support debugging, and reduce the risk of breaking working features during integration.
 
 Our testing approach is best described as **post-development regression testing**, using a combination of:
