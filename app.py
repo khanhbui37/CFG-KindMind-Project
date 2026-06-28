@@ -32,14 +32,33 @@ class PasswordHasher:
         return check_password_hash(stored_hash, password)
 
 class JournalEntry:
-    def __init__(self, title, content, mood, energy_level):
+    """Represents a journal entry matching all fields used by create_journal_entry."""
+
+    def __init__(self, user_id, title, content, mood_category,
+                 mood_score, energy_level, free_time, weather, recommendations):
+        self.user_id = user_id
         self.title = title
         self.content = content
-        self.mood = mood
+        self.mood_category = mood_category
+        self.mood_score = mood_score
         self.energy_level = energy_level
-    
-    def get_summary(self):
-        return f"'{self.title}' - Mood: {self.mood}, Energy: {self.energy_level}/10"
+        self.free_time = free_time
+        self.weather = weather
+        self.recommendations = recommendations
+
+    def to_dict(self):
+        """Convert the JournalEntry instance to a dictionary for db_utils."""
+        return {
+            "user_id": self.user_id,
+            "title": self.title,
+            "content": self.content,
+            "mood_category": self.mood_category,
+            "mood_score": self.mood_score,
+            "energy_level": self.energy_level,
+            "free_time": self.free_time,
+            "weather": self.weather,
+            "recommendations": self.recommendations
+        }
 
 # user created entries
 entry_a = JournalEntry("Monday", "Had a fantastic day!", "happy", 9)
