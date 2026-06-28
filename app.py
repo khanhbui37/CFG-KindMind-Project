@@ -98,16 +98,6 @@ class JournalEntry:
             "recommendations": self.recommendations
         }
 
-# user created entries
-entry_a = JournalEntry("Monday", "Had a fantastic day!", "happy", 9)
-entry_b = JournalEntry("Tuesday", "Felt tired", "calm", 4)
-
-# Use them
-print(f"entry_a: {entry_a.get_summary()}")
-print(f"entry_b: {entry_b.get_summary()}")
-print(f"entry_a mood: {entry_a.mood}")
-print(f"entry_b mood: {entry_b.mood}")
-
 
 # Hash password before saving it to the database.
 def hash_password(password):
