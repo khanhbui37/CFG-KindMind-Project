@@ -46,6 +46,44 @@ class JournalEntry:
         self.weather = weather
         self.recommendations = recommendations
 
+    @classmethod
+    def from_dict(cls, data):
+        """Create a JournalEntry instance from a dictionary."""
+        return cls(
+            user_id=data.get("user_id"),
+            title=data.get("title"),
+            content=data.get("content"),
+            mood_category=data.get("mood_category"),
+            mood_score=data.get("mood_score"),
+            energy_level=data.get("energy_level"),
+            free_time=data.get("free_time"),
+            weather=data.get("weather"),
+            recommendations=data.get("recommendations")
+        )
+
+    def validate(self):
+        """Returns a list of validation errors, or empty list if valid."""
+        errors = []
+        if not self.user_id or not isinstance(self.user_id, int):
+            errors.append("User ID must be an integer.")
+        if not self.title or not isinstance(self.title, str):
+            errors.append("Title is required.")
+        if not self.content or not isinstance(self.content, str):
+            errors.append("Content is required.")
+        if self.mood_category not in [1, 2, 3, 4]:
+            errors.append("Invalid mood category.")
+        if self.mood_score not in range(1, 10):
+            errors.append("Invalid mood score.")
+        if self.energy_level not in range(1, 8):
+            errors.append("Invalid energy level.")
+        if not isinstance(self.free_time, bool):
+            errors.append("Free time must be True or False.")
+        if not self.weather or not isinstance(self.weather, str):
+            errors.append("Weather is required.")
+        if not isinstance(self.recommendations, str):
+            errors.append("Recommendations must be a string.")
+        return errors
+
     def to_dict(self):
         """Convert the JournalEntry instance to a dictionary for db_utils."""
         return {
