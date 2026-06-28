@@ -514,6 +514,7 @@ def view_journal_entry():
             }), 404
 
         response = {
+            "total_entries": len(found_entries),
             "entries": found_entries
         }
 
