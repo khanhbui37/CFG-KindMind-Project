@@ -97,7 +97,6 @@ class JournalEntry:
             "recommendations": self.recommendations
         }
 
-
 # Hash password before saving it to the database.
 def hash_password(password):
     return generate_password_hash(password)
