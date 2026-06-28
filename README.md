@@ -355,3 +355,6 @@ If more time were available, useful future testing improvements would include:
 - Ayesha Grewal
 
 ---
+## Project Activity Log
+
+Please use this [link](https://docs.google.com/spreadsheets/d/1UK1Sqdbwy7oSx5mjZLknlmH0eKskx8uv/edit?gid=2037823253#gid=2037823253) to access our Activity Log. 
