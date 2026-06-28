@@ -25,7 +25,7 @@ Return to Main Menu
 
 ---
 
-## Welcome Menu
+## Main Menu
 
 1. Register
 2. Login
@@ -33,7 +33,7 @@ Return to Main Menu
 
 ---
 
-## Main Menu
+## Logged In Menu
 
 1. Add Journal Entry
 2. View Journal Entries
@@ -106,10 +106,8 @@ When adding a journal entry, the user will be asked for:
 ## Proposed Functions
 
 ```python
-show_welcome_menu()
-show_main_menu()
-register_user()
-login_user()
+```
+login_menu()
 add_journal_entry()
 view_journal_entries()
 edit_journal_entry()
