@@ -224,9 +224,125 @@ Database: `kindMind`
 
 ---
 
-## 🧪 Testing
+## 🧪 Testing Approach
 
-*To be confirmed*
+## Testing Approach
+
+KindMind does not follow strict Test-Driven Development. The main application features were built first, and tests were added afterwards to check existing functionality, support debugging, and reduce the risk of breaking working features during integration.
+
+Our testing approach is best described as **post-development regression testing**, using a combination of:
+
+* unit testing
+* integration testing
+* mock-based database testing
+* manual end-to-end testing
+
+> **Note:** This project uses a post-development testing approach rather than strict Test-Driven Development. Automated tests were added after the main features were implemented, with a focus on checking existing functionality, supporting integration work, and reducing the risk of regressions. Manual testing was also used for the console-based user journey in `main.py`, as some user input/output flows were better checked manually within the project timeframe.
+
+---
+
+### Automated Testing
+
+Automated tests were added for key parts of the project after the core functionality was developed.
+
+The database utility tests focus on checking the behaviour of functions in `db_utils.py`. These tests use mocked database connections and cursors, so they can run without needing a live MySQL database. This makes the tests safer to run across different local environments and avoids changing real project data during testing.
+
+The integration tests focus on checking how the Flask routes behave when they receive requests. These tests help confirm that important routes return the expected status codes, response messages and data structures.
+
+Automated testing covers areas such as:
+
+* database connection handling
+* database and table creation logic
+* user creation
+* password hashing behaviour
+* journal entry creation
+* viewing journal entries
+* updating journal entries
+* deleting journal entries
+* retrieving the logged-in user ID
+* searching journal entries
+* mood summary helper logic
+* registration behaviour
+* login behaviour
+
+---
+
+### Manual Testing
+
+Manual testing was also used because the project includes a console-based user interface in `main.py`. Some console interactions are harder to test automatically within the available project time, so the main user journey was checked manually.
+
+Manual testing focused on:
+
+* starting the application successfully
+* registering a new user
+* preventing duplicate email registration
+* logging in with valid credentials
+* rejecting incorrect login details
+* adding a journal entry
+* viewing journal entries
+* editing a journal entry
+* deleting a journal entry
+* searching journal entries
+* viewing the mood summary
+* checking that console error messages are clear and do not return `None`
+
+---
+
+### Running the Tests
+
+To run the tests, make sure the project dependencies are installed first:
+
+```bash
+pip install -r requirements.txt
+```
+
+Then run the database utility tests:
+
+```bash
+python -m pytest test_db_utils.py -v
+```
+
+To run the integration tests:
+
+```bash
+python -m pytest test_kindmind_integration.py -v
+```
+
+To run all available tests:
+
+```bash
+python -m pytest -v
+```
+
+Using `python -m pytest` is recommended because it is more reliable across different local Python environments, especially on Windows.
+
+---
+
+### Testing Limitations
+
+Due to time constraints, we did not create separate dedicated `test_app.py` and `test_main.py` files.
+
+Instead:
+
+* Flask route behaviour is covered through the integration tests
+* database behaviour is covered through `db_utils.py` tests
+* console behaviour in `main.py` is checked through manual testing
+
+This means the project does not have complete automated test coverage for every file. However, the combination of automated tests and manual testing gives coverage of the main user flows and the most important database and route behaviours.
+
+---
+
+### Future Testing Improvements
+
+If more time were available, useful future testing improvements would include:
+
+* adding a dedicated `test_main.py` file for console input/output behaviour
+* adding a dedicated `test_app.py` file for more detailed Flask route testing
+* expanding integration tests for more edge cases
+* adding more tests after the OOP changes in `app.py`
+* adding coverage reporting with `pytest-cov`
+* adding automated tests for weather API failure handling
+* adding tests for database casing consistency across local environments
 
 ---
 
