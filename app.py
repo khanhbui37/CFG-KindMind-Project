@@ -20,15 +20,16 @@ app = Flask(__name__)
 
 # OOP Models 
 
-class User:
-    def __init__(self,username,email,password):
-        self.username = username
-        self.email = email
-        self.password = generate_password_hash(password)
+class PasswordHasher:
+    """Handles password hashing and verification using Werkzeug."""
 
-    def check_password(self,password):
-        return check_password_hash(self.password,password)
-    
+    @staticmethod
+    def hash(password):
+        return generate_password_hash(password)
+
+    @staticmethod
+    def verify(stored_hash, password):
+        return check_password_hash(stored_hash, password)
 
 class JournalEntry:
     def __init__(self, title, content, mood, energy_level):
