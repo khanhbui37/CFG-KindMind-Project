@@ -468,7 +468,7 @@ def get_logged_in_user_id(email):
             db.close()
 
 
-
+# Make changes so user will have a names instead of ids
 def get_searched_entries(user_id, mood, keyword, sort, limit):
     db = None
     cursor = None
@@ -479,32 +479,46 @@ def get_searched_entries(user_id, mood, keyword, sort, limit):
         cursor = db.cursor(dictionary=True)
 
         query = """
-                SELECT *
-                FROM journal_entries
-                WHERE user_id = %s
+                SELECT 
+                    j.entry_id,
+                    j.user_id,
+                    j.title,
+                    j.content,
+                    j.mood_score_id,
+                    j.energy_level_id,
+                    j.weather,
+                    j.free_time,
+                    j.recommendations,
+                    j.created_at,
+                    m.category_name AS mood_category,
+                    s.score_name AS mood_score,
+                    e.energy_name AS energy_level
+                FROM journal_entries j
+                INNER JOIN mood_category m ON j.mood_category_id = m.category_id
+                INNER JOIN mood_score s ON j.mood_score_id = s.score_id
+                INNER JOIN energy_level e ON j.energy_level_id = e.energy_id
+                WHERE j.user_id = %s
             """
-
         params = [user_id]
 
         if mood:
-            query += " AND mood_category_id = %s"
+            query += " AND j.mood_category_id = %s"
             params.append(mood)
 
         if keyword:
             query += """
                     AND (
-                        title LIKE %s
-                        OR content LIKE %s
+                        j.title LIKE %s
+                        OR j.content LIKE %s
                     )
                 """
             search_term = f"%{keyword}%"
             params.extend([search_term, search_term])
 
-
         if sort == "date_asc":
-            query += " ORDER BY created_at ASC"
+            query += " ORDER BY j.created_at ASC"
         else:
-            query += " ORDER BY created_at DESC"
+            query += " ORDER BY j.created_at DESC"
 
         query += " LIMIT %s"
         params.append(limit)
@@ -513,15 +527,11 @@ def get_searched_entries(user_id, mood, keyword, sort, limit):
         cursor.execute(query, params)
         entries = cursor.fetchall()
 
-
     except mysql.connector.Error as error:
         print(f"Something went wrong: {error}")
-
     finally:
-        if cursor:
-            cursor.close()
-        if db:
-            db.close()
+        if cursor: cursor.close()
+        if db: db.close()
 
     return entries if entries else None
 
