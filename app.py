@@ -57,30 +57,48 @@ class JournalEntry:
             energy_level=data.get("energy_level"),
             free_time=data.get("free_time"),
             weather=data.get("weather"),
-            recommendations=data.get("recommendations")
+            recommendations=data.get("recommendations", "")
         )
 
     def validate(self):
         """Returns a list of validation errors, or empty list if valid."""
         errors = []
-        if not self.user_id or not isinstance(self.user_id, int):
+
+        if self.user_id is None:
+            errors.append("User ID is required.")
+        elif not isinstance(self.user_id, int):
             errors.append("User ID must be an integer.")
-        if not self.title or not isinstance(self.title, str):
+        elif self.user_id <= 0:
+            errors.append("User ID must be greater than 0.")
+
+        if not isinstance(self.title, str) or not self.title.strip():
             errors.append("Title is required.")
-        if not self.content or not isinstance(self.content, str):
+        elif len(self.title.strip()) > 100:
+            errors.append("Title cannot exceed 100 characters.")
+
+        if not isinstance(self.content, str) or not self.content.strip():
             errors.append("Content is required.")
+        elif len(self.content) > 5000:
+            errors.append("Content cannot exceed 5000 characters.")
+
         if self.mood_category not in [1, 2, 3, 4]:
             errors.append("Invalid mood category.")
+
         if self.mood_score not in range(1, 10):
             errors.append("Invalid mood score.")
+
         if self.energy_level not in range(1, 8):
             errors.append("Invalid energy level.")
+
         if not isinstance(self.free_time, bool):
             errors.append("Free time must be True or False.")
-        if not self.weather or not isinstance(self.weather, str):
+
+        if not isinstance(self.weather, str) or not self.weather.strip():
             errors.append("Weather is required.")
+
         if not isinstance(self.recommendations, str):
             errors.append("Recommendations must be a string.")
+
         return errors
 
     def to_dict(self):
@@ -99,11 +117,11 @@ class JournalEntry:
 
 # Hash password before saving it to the database.
 def hash_password(password):
-    return generate_password_hash(password)
+    return PasswordHasher.hash(password)
 
 # Check typed password against the stored password hash.
 def verify_password(stored_hash, password):
-    return check_password_hash(stored_hash, password)
+    return PasswordHasher.verify(stored_hash, password)
 
 # Helper function to validate user info.
 def validate_user_fields(data):
@@ -287,65 +305,8 @@ def validate_login_data(data):
 
 # Helper Function to validate add journal entry details
 def validate_add_journal_entry(data):
-
-    errors=[]
-
-    # Extract fields.
-    user_id = data.get("user_id")
-    title = data.get("title")
-    content = data.get("content")
-    mood_category = data.get("mood_category")
-    mood_score = data.get("mood_score")
-    energy_level = data.get("energy_level")
-    free_time = data.get("free_time")
-    weather = data.get("weather")
-    recommendations = data.get("recommendations")
-
-    # Validate user_id.
-    if user_id is None:
-        errors.append("User ID is required")
-
-    if not isinstance(user_id, int):
-        errors.append("User ID must be an integer.")
-
-    # Validate title.
-    if not isinstance(title, str) or not title.strip():
-        errors.append("Title is required.")
-
-    elif len(title.strip()) > 100:
-        errors.append("Title cannot exceed 100 characters.")
-
-    # Validate content.
-    if not isinstance(content, str) or not content.strip():
-        errors.append("Content is required.")
-
-    elif len(content) > 5000:
-        errors.append("Content cannot exceed 5000 characters.")
-
-    # Validate mood category.
-    if mood_category not in [1, 2, 3, 4]:
-        errors.append("Invalid mood category.")
-
-    # Validate mood score.
-    if mood_score not in [1, 2, 3, 4, 5, 6, 7, 8, 9]:
-        errors.append("Invalid mood score.")
-
-    # Validate energy level.
-    if energy_level not in [1, 2, 3, 4, 5, 6, 7]:
-        errors.append("Invalid energy level.")
-
-    # Validate free time.
-    if not isinstance(free_time, bool):
-        errors.append("Free time must be True or False.")
-
-    # Validate weather.
-    if not isinstance(weather, str) or not weather.strip():
-        errors.append("Weather is required.")
-
-    # Validate recommendations.
-
-    if not isinstance(recommendations, str):
-        errors.append("Recommendations must be a string.")
+    journal_entry = JournalEntry.from_dict(data)
+    errors = journal_entry.validate()
 
     return errors if errors else None
 
