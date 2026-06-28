@@ -575,14 +575,6 @@ def edit_journal_entry(entry_id):
 @app.route('/login/journal_entries/<int:entry_id>', methods=['DELETE'])
 def delete_journal(entry_id):
     try:
-        # Ensure the request body is JSON
-        if not request.is_json:
-            return jsonify({
-                "status": "error",
-                "message": "Request must be JSON",
-                "error": "INVALID_CONTENT_TYPE"
-            }), 400
-
         # Validate that the entry ID is greater than 0
         if entry_id <= 0:
             return jsonify({
