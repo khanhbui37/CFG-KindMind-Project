@@ -17,13 +17,111 @@ import mysql.connector
 
 app = Flask(__name__)
 
+# OOP Models 
+
+class PasswordHasher:
+    """Handles password hashing and verification using Werkzeug."""
+
+    @staticmethod
+    def hash(password):
+        return generate_password_hash(password)
+
+    @staticmethod
+    def verify(stored_hash, password):
+        return check_password_hash(stored_hash, password)
+
+class JournalEntry:
+    """Represents a journal entry matching all fields used by create_journal_entry."""
+
+    def __init__(self, user_id, title, content, mood_category,
+                 mood_score, energy_level, free_time, weather, recommendations):
+        self.user_id = user_id
+        self.title = title
+        self.content = content
+        self.mood_category = mood_category
+        self.mood_score = mood_score
+        self.energy_level = energy_level
+        self.free_time = free_time
+        self.weather = weather
+        self.recommendations = recommendations
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create a JournalEntry instance from a dictionary."""
+        return cls(
+            user_id=data.get("user_id"),
+            title=data.get("title"),
+            content=data.get("content"),
+            mood_category=data.get("mood_category"),
+            mood_score=data.get("mood_score"),
+            energy_level=data.get("energy_level"),
+            free_time=data.get("free_time"),
+            weather=data.get("weather"),
+            recommendations=data.get("recommendations", "")
+        )
+
+    def validate(self):
+        """Returns a list of validation errors, or empty list if valid."""
+        errors = []
+
+        if self.user_id is None:
+            errors.append("User ID is required.")
+        elif not isinstance(self.user_id, int):
+            errors.append("User ID must be an integer.")
+        elif self.user_id <= 0:
+            errors.append("User ID must be greater than 0.")
+
+        if not isinstance(self.title, str) or not self.title.strip():
+            errors.append("Title is required.")
+        elif len(self.title.strip()) > 100:
+            errors.append("Title cannot exceed 100 characters.")
+
+        if not isinstance(self.content, str) or not self.content.strip():
+            errors.append("Content is required.")
+        elif len(self.content) > 5000:
+            errors.append("Content cannot exceed 5000 characters.")
+
+        if self.mood_category not in [1, 2, 3, 4]:
+            errors.append("Invalid mood category.")
+
+        if self.mood_score not in range(1, 10):
+            errors.append("Invalid mood score.")
+
+        if self.energy_level not in range(1, 8):
+            errors.append("Invalid energy level.")
+
+        if not isinstance(self.free_time, bool):
+            errors.append("Free time must be True or False.")
+
+        if not isinstance(self.weather, str) or not self.weather.strip():
+            errors.append("Weather is required.")
+
+        if not isinstance(self.recommendations, str):
+            errors.append("Recommendations must be a string.")
+
+        return errors
+
+    def to_dict(self):
+        """Convert the JournalEntry instance to a dictionary for db_utils."""
+        return {
+            "user_id": self.user_id,
+            "title": self.title,
+            "content": self.content,
+            "mood_category": self.mood_category,
+            "mood_score": self.mood_score,
+            "energy_level": self.energy_level,
+            "free_time": self.free_time,
+            "weather": self.weather,
+            "recommendations": self.recommendations
+        }
+
 # Hash password before saving it to the database.
 def hash_password(password):
-    return generate_password_hash(password)
+    return PasswordHasher.hash(password)
 
 # Check typed password against the stored password hash.
 def verify_password(stored_hash, password):
-    return check_password_hash(stored_hash, password)
+    return PasswordHasher.verify(stored_hash, password)
 
 # Helper function to validate user info.
 def validate_user_fields(data):
@@ -207,65 +305,8 @@ def validate_login_data(data):
 
 # Helper Function to validate add journal entry details
 def validate_add_journal_entry(data):
-
-    errors=[]
-
-    # Extract fields.
-    user_id = data.get("user_id")
-    title = data.get("title")
-    content = data.get("content")
-    mood_category = data.get("mood_category")
-    mood_score = data.get("mood_score")
-    energy_level = data.get("energy_level")
-    free_time = data.get("free_time")
-    weather = data.get("weather")
-    recommendations = data.get("recommendations")
-
-    # Validate user_id.
-    if user_id is None:
-        errors.append("User ID is required")
-
-    if not isinstance(user_id, int):
-        errors.append("User ID must be an integer.")
-
-    # Validate title.
-    if not isinstance(title, str) or not title.strip():
-        errors.append("Title is required.")
-
-    elif len(title.strip()) > 100:
-        errors.append("Title cannot exceed 100 characters.")
-
-    # Validate content.
-    if not isinstance(content, str) or not content.strip():
-        errors.append("Content is required.")
-
-    elif len(content) > 5000:
-        errors.append("Content cannot exceed 5000 characters.")
-
-    # Validate mood category.
-    if mood_category not in [1, 2, 3, 4]:
-        errors.append("Invalid mood category.")
-
-    # Validate mood score.
-    if mood_score not in [1, 2, 3, 4, 5, 6, 7, 8, 9]:
-        errors.append("Invalid mood score.")
-
-    # Validate energy level.
-    if energy_level not in [1, 2, 3, 4, 5, 6, 7]:
-        errors.append("Invalid energy level.")
-
-    # Validate free time.
-    if not isinstance(free_time, bool):
-        errors.append("Free time must be True or False.")
-
-    # Validate weather.
-    if not isinstance(weather, str) or not weather.strip():
-        errors.append("Weather is required.")
-
-    # Validate recommendations.
-
-    if not isinstance(recommendations, str):
-        errors.append("Recommendations must be a string.")
+    journal_entry = JournalEntry.from_dict(data)
+    errors = journal_entry.validate()
 
     return errors if errors else None
 
@@ -473,6 +514,7 @@ def view_journal_entry():
             }), 404
 
         response = {
+            "total_entries": len(found_entries),
             "entries": found_entries
         }
 
@@ -534,14 +576,6 @@ def edit_journal_entry(entry_id):
 @app.route('/login/journal_entries/<int:entry_id>', methods=['DELETE'])
 def delete_journal(entry_id):
     try:
-        # Ensure the request body is JSON
-        if not request.is_json:
-            return jsonify({
-                "status": "error",
-                "message": "Request must be JSON",
-                "error": "INVALID_CONTENT_TYPE"
-            }), 400
-
         # Validate that the entry ID is greater than 0
         if entry_id <= 0:
             return jsonify({
