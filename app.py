@@ -29,16 +29,6 @@ class User:
     def check_password(self,password):
         return check_password_hash(self.password,password)
     
-    # fake users 
-    user_a = User ("Katniss", "Katnissforeverdeen@hotmail.com", "password 456")
-    user_b = User ("Finnick", "FinnickOd@gmai.com", "secret789")
-
-    # test
-    print(f"user_a username: {user_a.username}")
-    print(f"user_b username: {user_b.username}")
-    print(f"user_a password correct? {user_a.check_password('secret123')}")
-    print(f"user_b password correct? {user_b.check_password('wrongpass')}")
-
 
 class JournalEntry:
     def __init__(self, title, content, mood, energy_level):
