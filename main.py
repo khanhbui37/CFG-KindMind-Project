@@ -468,9 +468,7 @@ def post_registration_info():
         print(f"Error: {e}")
 
 def view_journal_entry(logged_in_id):
-
-    params = {"user_id": logged_in_id
-              }
+    params = {"user_id": logged_in_id}
 
     # Display the View Journal Entries heading.
     print(
@@ -480,8 +478,9 @@ def view_journal_entry(logged_in_id):
     )
 
     try:
+        # [CHANGED] Using the search_entries endpoint which leverages our database INNER JOINs
         response = requests.get(
-            f"{BASE_URL}/login/journal_entries",
+            f"{BASE_URL}/login/search_entries",
             params=params
         )
 
@@ -502,17 +501,15 @@ def view_journal_entry(logged_in_id):
         )
 
         for entry in data["entries"]:
-            # Display mood category ID as mood category name
-            mood = mood_category_name(entry['mood_category_id'])
+            # [CHANGED] No longer need mood_category_name() because the API returns the string directly under 'mood_category'
             print(
                 colorama.Fore.CYAN +
-                f"Journal ID:{entry['entry_id']}, Title:{entry['title']}, Mood:{mood}" +
+                f"Journal ID:{entry['entry_id']}, Title:{entry['title']}, Mood:{entry['mood_category']}" +
                 colorama.Style.RESET_ALL
             )
 
         # Ask the user which journal entry they would like to view.
         # Validation ensures the selected entry ID exists.
-
         while True:
             selected_entry = None
             entry_choice = input(
@@ -539,6 +536,7 @@ def view_journal_entry(logged_in_id):
                     selected_entry = entry
                     break
 
+            # [CHANGED] Kept Code 2's clean validation loop - error prints only AFTER checking all items
             if selected_entry is None:
                 print(
                     colorama.Fore.RED +
@@ -548,7 +546,6 @@ def view_journal_entry(logged_in_id):
                 continue
 
             break
-
 
         # Display the full details of the selected journal entry.
         if selected_entry:
@@ -561,9 +558,12 @@ def view_journal_entry(logged_in_id):
             print(colorama.Fore.CYAN + f"Entry ID: {selected_entry['entry_id']}" + colorama.Style.RESET_ALL)
             print(colorama.Fore.CYAN + f"Title: {selected_entry['title']}" + colorama.Style.RESET_ALL)
             print(colorama.Fore.CYAN + f"Content: {selected_entry['content']}" + colorama.Style.RESET_ALL)
-            print(colorama.Fore.CYAN + f"Mood Category: {selected_entry['mood_category_id']}" + colorama.Style.RESET_ALL)
-            print(colorama.Fore.CYAN + f"Mood Score: {selected_entry['mood_score_id']}" + colorama.Style.RESET_ALL)
-            print(colorama.Fore.CYAN + f"Energy Level: {selected_entry['energy_level_id']}" + colorama.Style.RESET_ALL)
+
+            # [CHANGED] Switched from raw IDs back to beautiful text strings pulled from the DB joins
+            print(colorama.Fore.CYAN + f"Mood Category: {selected_entry['mood_category']}" + colorama.Style.RESET_ALL)
+            print(colorama.Fore.CYAN + f"Mood Score: {selected_entry['mood_score']}" + colorama.Style.RESET_ALL)
+            print(colorama.Fore.CYAN + f"Energy Level: {selected_entry['energy_level']}" + colorama.Style.RESET_ALL)
+
             print(colorama.Fore.CYAN + f"Free Time: {selected_entry['free_time']}" + colorama.Style.RESET_ALL)
             print(colorama.Fore.CYAN + f"Weather: {selected_entry['weather']}" + colorama.Style.RESET_ALL)
 
@@ -583,8 +583,8 @@ def view_journal_entry(logged_in_id):
 
     except requests.exceptions.RequestException as e:
         print(colorama.Fore.RED +
-            f"\nConnection error: {e}" +
-            colorama.Style.RESET_ALL)
+              f"\nConnection error: {e}" +
+              colorama.Style.RESET_ALL)
 
 
 
@@ -1031,18 +1031,19 @@ def edit_journal_entry(logged_in_id):
             colorama.Style.RESET_ALL
         )
 
-        print(colorama.Fore.CYAN + f"Entry ID: {updated_entry['entry_id']}" +
-            colorama.Style.RESET_ALL)
-        print(colorama.Fore.CYAN + f"Title: {updated_entry['title']}" +
-            colorama.Style.RESET_ALL)
-        print(colorama.Fore.CYAN + f"Content: {updated_entry['content']}"+
-            colorama.Style.RESET_ALL)
+        # Changed the code to pull the ID from selected_entry and the new text from the updated dictionary.
+        # This fixes the bug where the app crashed with an error instead of showing the updated values.
+        print(colorama.Fore.CYAN + f"Entry ID: {selected_entry['entry_id']}" +
+              colorama.Style.RESET_ALL)
+        print(colorama.Fore.CYAN + f"Title: {updated['title']}" +
+              colorama.Style.RESET_ALL)
+        print(colorama.Fore.CYAN + f"Content: {updated['content']}" +
+              colorama.Style.RESET_ALL)
 
     except requests.exceptions.RequestException as e:
         print(colorama.Fore.RED +
-            f"\nConnection error: {e}" +
-            colorama.Style.RESET_ALL)
-
+              f"\nConnection error: {e}" +
+              colorama.Style.RESET_ALL)
 
 
 def delete_entry(logged_in_id):
@@ -1243,13 +1244,13 @@ def search_entries(logged_in_id):
             return
 
         for entry in data["entries"]:
-
+            # Updated keys to use text strings ('mood_category', etc.) instead of raw database IDs
             print(f"Entry ID: {entry['entry_id']}")
             print(f"Title: {entry['title']}")
             print(f"Content: {entry['content']}")
-            print(f"Mood Category: {entry['mood_category_id']}")
-            print(f"Mood Score: {entry['mood_score_id']}")
-            print(f"Energy Level: {entry['energy_level_id']}")
+            print(f"Mood Category: {entry['mood_category']}")
+            print(f"Mood Score: {entry['mood_score']}")
+            print(f"Energy Level: {entry['energy_level']}")
             print(f"Free Time: {entry['free_time']}")
             print(f"Weather: {entry['weather']}")
             print(f"Recommendations: {entry['recommendations']}")
