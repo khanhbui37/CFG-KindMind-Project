@@ -1197,12 +1197,19 @@ def delete_entry(logged_in_id):
 
 
 def search_entries(logged_in_id):
+    print("=== SEARCH JOURNAL ENTRIES ===")
 
-    print("=== Search Journal Entries ===")
+    print("Search by mood category (optional):")
+    print("1. Negative")
+    print("2. Neutral")
+    print("3. Positive")
+    print("4. Ambiguous")
+    print("Press Enter to search all moods.")
+    mood = input("Mood Category (1-4): ").strip()
 
-    mood = input("Mood: ").strip()
-    keyword = input("Keyword: ").strip()
-    print("\nSort entries By:")
+    keyword = input("Keyword (optional - searches title/content): ").strip()
+
+    print("Sort entries by:")
     print("1. Newest first")
     print("2. Oldest first")
     sort_choice = input("Your Choice (1/2): ").strip()
@@ -1213,7 +1220,7 @@ def search_entries(logged_in_id):
     else:
         sort = "date_desc"
 
-    limit = input("Number of entries to return (default 20): ").strip()
+    limit = input("Number of entries to return (press Enter for default 20): ").strip()
 
     params = {"user_id" : logged_in_id,
                  "sort" : sort
@@ -1240,7 +1247,8 @@ def search_entries(logged_in_id):
             return
 
         if not data["entries"]:
-            print("No entries found.")
+            print("No journal entries matched your search.")
+            print("Try using a different mood, keyword, or leaving a filter blank.")
             return
 
         for entry in data["entries"]:
