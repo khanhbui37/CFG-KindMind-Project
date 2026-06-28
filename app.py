@@ -12,7 +12,6 @@ from db_utils import (
     get_logged_in_user_id
 )
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
 import re
 import mysql.connector
 
@@ -529,22 +528,41 @@ def search_entries():
 # Returns the user's journal entries along with a total count
 @app.route('/login/journal_entries', methods=['GET'])
 def view_journal_entry():
+    try:
+        user_id = request.args.get("user_id")
 
-    # Get the user ID from the URL query parameters
-    # Example: /login/journal_entries?user_id=1
-    user_id = request.args.get("user_id")
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+        try:
+            user_id = int(user_id)
 
-    # Retrieve all journal entries for the specified user
-    # If no entries are found, use an empty list to avoid errors when using len()
-    entries = get_user_journal_entries(user_id) or []
+        except (ValueError, TypeError):
+            return jsonify({
+                "error": "User ID must be a valid integer."
+            }), 400
 
-    # Return the journal entries as a JSON response
-    return jsonify({
-        "user_id": user_id,
-        "total_entries": len(entries),
-        "entries": entries
-    })
+        if user_id <= 0:
+            return jsonify({
+                "error": "User ID must be greater than 0."
+            }), 400
 
+        found_entries = get_user_journal_entries(user_id)
+
+        if found_entries is None:
+            return jsonify({
+                "error": "No Entries Found."
+            }), 404
+
+        response = {
+            "entries": found_entries
+        }
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": f"Server error: {str(e)}"
+        }), 500
 # API endpoint to update an existing journal entry
 # Uses the entry_id from the URL to identify which entry to edit
 @app.route('/login/journal_entries/<int:entry_id>', methods=['PUT'])
@@ -560,7 +578,7 @@ def edit_journal_entry(entry_id):
                 "error": "INVALID_CONTENT_TYPE"
             }), 400
 
-        # Retrieve the updated journal entry data from the request
+
         data = request.get_json()
 
         # Validate title and content are provided
@@ -596,8 +614,15 @@ def edit_journal_entry(entry_id):
 # Delete a journal entry using its unique entry ID
 @app.route('/login/journal_entries/<int:entry_id>', methods=['DELETE'])
 def delete_journal(entry_id):
-
     try:
+        # Ensure the request body is JSON
+        if not request.is_json:
+            return jsonify({
+                "status": "error",
+                "message": "Request must be JSON",
+                "error": "INVALID_CONTENT_TYPE"
+            }), 400
+
         # Validate that the entry ID is greater than 0
         if entry_id <= 0:
             return jsonify({
