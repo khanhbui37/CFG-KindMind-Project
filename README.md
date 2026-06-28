@@ -209,6 +209,9 @@ Database: `kindMind`
 * View Journal Entries (Method:GET):
   http://127.0.0.1:5000/login/journal_entries/<int:entry_id>
 
+* Edit Journal Entries (Method:PUT):
+  http://127.0.0.1:5000/login/journal_entries/<int:entry_id>
+
 * Search/Filter Journal Entries (Method:GET):
   http://127.0.0.1:5000/login/search_entries
 

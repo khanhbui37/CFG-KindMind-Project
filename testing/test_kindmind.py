@@ -179,7 +179,7 @@ class TestMainMenuFlow:
         with pytest.raises(SystemExit): #Check the program exists
             run()
  
- python# Test that if the user enters an invalid option first, the menu asks again
+# Test that if the user enters an invalid option first, the menu asks again
     @patch("main.post_register_info")
     @patch("builtins.input", side_effect=["9", "1"])
     def test_invalid_input_then_valid(self, mock_input, mock_register):

@@ -296,6 +296,7 @@ def get_user_journal_entries(user_id):
 
 # Update an existing journal entry in the database using the entry ID
 def update_journal_entry(entry_id, data):
+
     # Create variables for the database connection and cursor
     db = None
     cursor = None
@@ -305,7 +306,19 @@ def update_journal_entry(entry_id, data):
         db = get_connection()
 
         # Create a cursor to execute SQL queries
-        cursor = db.cursor()
+        cursor = db.cursor(dictionary=True)
+
+        # Select database kindMind
+        cursor.execute("USE kindMind")
+
+        cursor.execute(
+            "SELECT entry_id FROM journal_entries WHERE entry_id = %s",
+            (entry_id,)
+        )
+
+        if cursor.fetchone() is None:
+            return {"error": "Journal entry not found"}
+
 
         # Currently allows updating the journal title and content.
         # Additional fields can be added in future iterations if required.
@@ -323,22 +336,22 @@ def update_journal_entry(entry_id, data):
             entry_id
         )
 
-        # Select the KindMind database
-        cursor.execute("USE kindMind")
-
         # Execute the update query
         cursor.execute(query, values)
 
         # Save changes to the database
         db.commit()
 
-        # Check if any row was actually updated
-        # If rowcount is 0, the entry_id did not match any journal entry
-        if cursor.rowcount == 0:
-            return {"error": "Journal entry not found"}
+        # Retrieve the updated journal entry
+        cursor.execute("""
+                SELECT entry_id, title, content
+                FROM journal_entries
+                WHERE entry_id = %s
+            """, (entry_id,))
 
-        # Return success message
-        return {"message": "Journal Entry Successfully Updated"}
+        updated_entry = cursor.fetchone()
+
+        return updated_entry
 
     except mysql.connector.Error as error:
         # Handle any database-related errors
@@ -455,7 +468,7 @@ def get_logged_in_user_id(email):
             db.close()
 
 
-
+# Make changes so user will have a names instead of ids
 def get_searched_entries(user_id, mood, keyword, sort, limit):
     db = None
     cursor = None
@@ -466,32 +479,46 @@ def get_searched_entries(user_id, mood, keyword, sort, limit):
         cursor = db.cursor(dictionary=True)
 
         query = """
-                SELECT *
-                FROM journal_entries
-                WHERE user_id = %s
+                SELECT 
+                    j.entry_id,
+                    j.user_id,
+                    j.title,
+                    j.content,
+                    j.mood_score_id,
+                    j.energy_level_id,
+                    j.weather,
+                    j.free_time,
+                    j.recommendations,
+                    j.created_at,
+                    m.category_name AS mood_category,
+                    s.score_name AS mood_score,
+                    e.energy_name AS energy_level
+                FROM journal_entries j
+                INNER JOIN mood_category m ON j.mood_category_id = m.category_id
+                INNER JOIN mood_score s ON j.mood_score_id = s.score_id
+                INNER JOIN energy_level e ON j.energy_level_id = e.energy_id
+                WHERE j.user_id = %s
             """
-
         params = [user_id]
 
         if mood:
-            query += " AND mood_category_id = %s"
+            query += " AND j.mood_category_id = %s"
             params.append(mood)
 
         if keyword:
             query += """
                     AND (
-                        title LIKE %s
-                        OR content LIKE %s
+                        j.title LIKE %s
+                        OR j.content LIKE %s
                     )
                 """
             search_term = f"%{keyword}%"
             params.extend([search_term, search_term])
 
-
         if sort == "date_asc":
-            query += " ORDER BY created_at ASC"
+            query += " ORDER BY j.created_at ASC"
         else:
-            query += " ORDER BY created_at DESC"
+            query += " ORDER BY j.created_at DESC"
 
         query += " LIMIT %s"
         params.append(limit)
@@ -500,15 +527,11 @@ def get_searched_entries(user_id, mood, keyword, sort, limit):
         cursor.execute(query, params)
         entries = cursor.fetchall()
 
-
     except mysql.connector.Error as error:
         print(f"Something went wrong: {error}")
-
     finally:
-        if cursor:
-            cursor.close()
-        if db:
-            db.close()
+        if cursor: cursor.close()
+        if db: db.close()
 
     return entries if entries else None
 
